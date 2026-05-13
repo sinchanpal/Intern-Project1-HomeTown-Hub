@@ -19,10 +19,17 @@ const userSchema = new mongoose.Schema(
             required: true,
             minlength: 6,
         },
-        hometown: {
+        state: {
             type: String,
-            required: true, // Crucial for a platform focused on local connections!
+            required: true,
             trim: true,
+            lowercase: true,
+        },
+        city: {
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true,
         },
         role: {
             type: String,

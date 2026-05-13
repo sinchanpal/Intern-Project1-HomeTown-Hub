@@ -7,6 +7,9 @@ import { useSelector } from 'react-redux';
 import useGetCurrentUserData from './hooks/useGetCurrentUserData';
 import { ClipLoader } from 'react-spinners';
 import ForgotPassword from './pages/ForgotPassword';
+import CreateCommunity from './pages/CreateCommunity';
+import CommunityPage from './pages/CommunityPage';
+import EditCommunity from './pages/EditCommunity';
 
 export const serverUrl = "http://localhost:8000";
 
@@ -32,6 +35,9 @@ function App() {
       <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={'/'} />} />
       <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to={'/'} />} />
       <Route path='/forgot-password' element={!userData ? <ForgotPassword /> : <Navigate to="/" />} />
+      <Route path='/create-community' element={userData ? <CreateCommunity /> : <Navigate to={'/signin'} />} />
+      <Route path='/community-page/:id' element={userData ? <CommunityPage /> : <Navigate to={'/signin'} />} />
+      <Route path='/community-edit/:id' element={userData ? <EditCommunity /> : <Navigate to={'/signin'} />} />
     </Routes>
 
   )

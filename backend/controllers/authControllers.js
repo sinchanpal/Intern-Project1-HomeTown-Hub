@@ -7,9 +7,9 @@ import sendMail from "../config/mail.js";
 export const SignUp = async (req, res) => {
     try {
 
-        const { name, email, password, hometown } = req.body;
+        const { name, email, password, city, state } = req.body;
 
-        if (!name || !email || !password || !hometown) {
+        if (!name || !email || !password || !city || !state) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -34,7 +34,8 @@ export const SignUp = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            hometown
+            state,
+            city
 
         });
 

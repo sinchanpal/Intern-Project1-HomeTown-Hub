@@ -20,7 +20,8 @@ const SignUp = () => {
         name: false,
         email: false,
         password: false,
-        hometown: false
+        city: false,
+        state: false
     })
 
     const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +30,9 @@ const SignUp = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [hometown, setHometown] = useState("");
+    const [state, setState] = useState("");
+    const [city, setCity] = useState("");
+
 
     //state for showing the loading spinner
     const [loading, setLoading] = useState(false);
@@ -42,7 +45,7 @@ const SignUp = () => {
     const handleSignUp = async () => {
 
         // 1. Frontend Validation
-        if (!name || !email || !password || !hometown) {
+        if (!name || !email || !password || !state || !city) {
             setErr("Please fill in all fields.");
             return;
         }
@@ -59,7 +62,9 @@ const SignUp = () => {
                 name,
                 email,
                 password,
-                hometown
+                state,
+                city,
+
             }, { withCredentials: true });
 
             dispatch(setUserData(result.data)); // Set the user data in the Redux store
@@ -79,10 +84,10 @@ const SignUp = () => {
 
     return (
         <div className='w-full h-screen bg-linear-to-b from-black to-gray-900 flex flex-col justify-center items-center'>
-            <div className='w-[90%] lg:max-w-[60%] h-150 bg-white rounded-2xl flex justify-center items-center overflow-hidden border-2 border-[#1a1f23]'>
+            <div className='w-[90%] lg:max-w-[60%] h-170 bg-white rounded-2xl flex justify-center items-center overflow-hidden border-2 border-[#1a1f23]'>
 
                 {/* To show the form */}
-                <div className='w-full lg:w-[50%] h-full bg-white flex flex-col items-center p-2.5 gap-5'>
+                <div className='w-full lg:w-[50%] h-full bg-white flex flex-col items-center p-2.5 gap-6'>
 
                     <div className='flex gap-2.5 items-center text-[20px] font-semibold mt-10'>
                         <span>Sign Up to</span>
@@ -92,7 +97,7 @@ const SignUp = () => {
                     {/* This is for Name field */}
                     <div className='relative flex items-center justify-start w-[90%] h-12.5 rounded-2xl mt-7.5 border-2 border-black' onClick={() => setInputClicked({ ...inputClicked, name: true })}>
 
-                        <label htmlFor='name' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.name ? "-top-4.5" : ""}`}>Enter Your Name</label>
+                        <label htmlFor='name' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.name ? "-top-5.5" : ""}`}>Enter Your Name</label>
                         <input type="text" id='name' className='w-full h-full rounded-2xl px-5 outline-none border-0' required value={name} onChange={(e) => setName(e.target.value)} />
 
                     </div>
@@ -100,7 +105,7 @@ const SignUp = () => {
                     {/* This is for email field */}
                     <div className='relative flex items-center justify-start w-[90%] h-12.5 rounded-2xl  border-2 border-black' onClick={() => setInputClicked({ ...inputClicked, email: true })}>
 
-                        <label htmlFor='email' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.email ? "-top-4.5" : ""}`}>Enter your Email</label>
+                        <label htmlFor='email' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.email ? "-top-5.5" : ""}`}>Enter your Email</label>
                         <input type="email" id='email' className='w-full h-full rounded-2xl px-5 outline-none border-0' required value={email} onChange={(e) => setEmail(e.target.value)} />
 
                     </div>
@@ -108,20 +113,31 @@ const SignUp = () => {
                     {/* This is for password field */}
                     <div className='relative flex items-center justify-start w-[90%] h-12.5 rounded-2xl  border-2 border-black' onClick={() => setInputClicked({ ...inputClicked, password: true })}>
 
-                        <label htmlFor='password' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.password ? "-top-4.5" : ""}`}>Enter a strong Password</label>
+                        <label htmlFor='password' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.password ? "-top-5.5" : ""}`}>Enter a strong Password</label>
                         <input type={showPassword ? "text" : "password"} id='password' className='w-full h-full rounded-2xl px-5 outline-none border-0' required value={password} onChange={(e) => setPassword(e.target.value)} />
 
                         {showPassword ? <LuEyeClosed className='absolute cursor-pointer right-5 w-6.25 h-6.25' onClick={() => setShowPassword(false)} /> : <LuEye className='absolute cursor-pointer right-5 w-6.25 h-6.25' onClick={() => setShowPassword(true)} />}
 
                     </div>
 
-                    {/* This is for homeTown field */}
-                    <div className='relative flex items-center justify-start w-[90%] h-12.5 rounded-2xl border-2 border-black' onClick={() => setInputClicked({ ...inputClicked, hometown: true })}>
 
-                        <label htmlFor='hometown' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.hometown ? "-top-4.5" : ""}`}>Enter Your Home Town</label>
-                        <input type="text" id='hometown' className='w-full h-full rounded-2xl px-5 outline-none border-0' required value={hometown} onChange={(e) => setHometown(e.target.value)} />
+                    {/* This is for state field */}
+                    <div className='relative flex items-center justify-start w-[90%] h-12.5 rounded-2xl border-2 border-black' onClick={() => setInputClicked({ ...inputClicked, state: true })}>
+
+                        <label htmlFor='state' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.state ? "-top-5.5" : ""}`}>Enter Your State</label>
+                        <input type="text" id='state' className='w-full h-full rounded-2xl px-5 outline-none border-0' required value={state} onChange={(e) => setState(e.target.value)} />
 
                     </div>
+
+                    {/* This is for city field */}
+                    <div className='relative flex items-center justify-start w-[90%] h-12.5 rounded-2xl border-2 border-black' onClick={() => setInputClicked({ ...inputClicked, city: true })}>
+
+                        <label htmlFor='city' className={`text-gray-700 absolute left-5 p-1.25 bg-white text-[16px] ${inputClicked.city ? "-top-5.5" : ""}`}>Enter Your City</label>
+                        <input type="text" id='city' className='w-full h-full rounded-2xl px-5 outline-none border-0' required value={city} onChange={(e) => setCity(e.target.value)} />
+
+                    </div>
+
+
 
                     {err && <p className='text-red-500 text-[14px]'>{err}</p>}
 

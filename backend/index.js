@@ -5,6 +5,8 @@ import dotenv from 'dotenv'
 import connectDB from './config/db.js';
 import authRouter from './routes/authRoutes.js';
 import userRouter from './routes/userRoutes.js';
+import communityRouter from './routes/communityRoutes.js';
+import postRouter from './routes/postRoutes.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -25,6 +27,8 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRouter); // Use the authRouter for routes starting with /api/auth
 app.use("/api/user", userRouter); // Use the userRouter for routes starting with /api/user
+app.use("/api/community", communityRouter); // Use the communityRouter for routes starting with /api/community
+app.use("/api/post", postRouter); // Use the postRouter for routes starting with /api/post
 
 // Start the server and listen on the specified port
 const PORT = process.env.PORT || 5000;

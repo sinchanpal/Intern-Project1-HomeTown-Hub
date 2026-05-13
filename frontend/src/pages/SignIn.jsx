@@ -69,10 +69,10 @@ const SignIn = () => {
 
     return (
         <div className='w-full h-screen bg-linear-to-b from-black to-gray-900 flex flex-col justify-center items-center'>
-            <div className='w-[90%] lg:max-w-[60%] h-150 bg-white rounded-2xl flex justify-center items-center overflow-hidden border-2 border-[#1a1f23]'>
+            <div className='w-[90%] lg:max-w-[60%] h-170 bg-white rounded-2xl flex justify-center items-center overflow-hidden border-2 border-[#1a1f23]'>
 
                 {/* To show the form */}
-                <div className='w-full lg:w-[50%] h-full bg-white flex flex-col justify-center items-center p-2.5 gap-5'>
+                <div className='w-full lg:w-[50%] h-full bg-white flex flex-col justify-center items-center p-2.5 gap-6'>
 
                     <div className='flex gap-2.5 items-center text-[20px] font-semibold mt-10'>
                         <span>Sign In to</span>
