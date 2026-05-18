@@ -10,6 +10,9 @@ import ForgotPassword from './pages/ForgotPassword';
 import CreateCommunity from './pages/CreateCommunity';
 import CommunityPage from './pages/CommunityPage';
 import EditCommunity from './pages/EditCommunity';
+import EditProfile from './pages/EditProfile';
+import Nav from './components/Nav';
+import MyHubs from './pages/MyHubs';
 
 export const serverUrl = "http://localhost:8000";
 
@@ -30,15 +33,23 @@ function App() {
 
   return (
 
-    <Routes>
-      <Route path='/' element={userData ? <Home /> : <Navigate to={'/signin'} />} />
-      <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={'/'} />} />
-      <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to={'/'} />} />
-      <Route path='/forgot-password' element={!userData ? <ForgotPassword /> : <Navigate to="/" />} />
-      <Route path='/create-community' element={userData ? <CreateCommunity /> : <Navigate to={'/signin'} />} />
-      <Route path='/community-page/:id' element={userData ? <CommunityPage /> : <Navigate to={'/signin'} />} />
-      <Route path='/community-edit/:id' element={userData ? <EditCommunity /> : <Navigate to={'/signin'} />} />
-    </Routes>
+    // Added pb-24 here so the bottom content doesn't get hidden behind the Nav!
+    <div className="min-h-screen relative pb-14 bg-gray-900">
+      <Routes>
+        <Route path='/' element={userData ? <Home /> : <Navigate to={'/signin'} />} />
+        <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={'/'} />} />
+        <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to={'/'} />} />
+        <Route path='/forgot-password' element={!userData ? <ForgotPassword /> : <Navigate to="/" />} />
+        <Route path='/create-community' element={userData ? <CreateCommunity /> : <Navigate to={'/signin'} />} />
+        <Route path='/community-page/:id' element={userData ? <CommunityPage /> : <Navigate to={'/signin'} />} />
+        <Route path='/community-edit/:id' element={userData ? <EditCommunity /> : <Navigate to={'/signin'} />} />
+        <Route path="/edit-profile" element={userData ? <EditProfile /> : <Navigate to={'/signin'} />} />
+        <Route path="/my-hubs" element={userData ? <MyHubs /> : <Navigate to={'/signin'} />} />
+      </Routes>
+
+      {/* Render Nav globally! It will hide itself if user is not logged in */}
+      <Nav />
+    </div>
 
   )
 }

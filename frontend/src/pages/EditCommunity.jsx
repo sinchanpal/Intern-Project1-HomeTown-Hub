@@ -106,7 +106,7 @@ const EditCommunity = () => {
     if (loading) return <div className="h-screen flex justify-center items-center bg-[#0f1115]"><ClipLoader color="#ffffff" size={50} /></div>;
 
     return (
-        <div className="min-h-screen bg-[#0f1115] text-white flex justify-center py-12 px-4">
+        <div className="min-h-screen bg-linear-to-b from-black to-gray-900 text-white flex justify-center py-12 px-4">
             <div className="w-full max-w-2xl bg-[#16191f] rounded-2xl p-8 border border-gray-800 shadow-xl">
 
                 <button onClick={() => navigate(`/community-page/${id}`)} className="flex items-center text-gray-400 hover:text-white mb-6 transition-colors">

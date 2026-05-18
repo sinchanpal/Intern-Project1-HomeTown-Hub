@@ -13,7 +13,7 @@ const postSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: true, // Every post must have at least some text.
+        default: "",
         trim: true
     },
     mediaType: {

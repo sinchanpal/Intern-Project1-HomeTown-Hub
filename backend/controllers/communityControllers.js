@@ -1,6 +1,6 @@
 import Community from "../models/communityModel.js";
 import User from "../models/userModel.js";
-import { uploadOnCloudinary} from "../config/cloudinary.js";
+import { uploadOnCloudinary } from "../config/cloudinary.js";
 
 //? This controller handles the creation of a new community hub
 export const createCommunity = async (req, res) => {
@@ -205,5 +205,22 @@ export const editCommunity = async (req, res) => {
             message: "Error updating community",
             error: error.message
         });
+    }
+};
+
+
+
+// Get all communities the user has joined
+export const getMyHubs = async (req, res) => {
+    try {
+        const userId = req.userId; // From isAuth middleware
+
+        // Find all communities where the user's ID is in the members array
+        const myCommunities = await Community.find({ members: userId })
+            .sort({ createdAt: -1 }); // Show newest first
+
+        return res.status(200).json({ myCommunities });
+    } catch (error) {
+        return res.status(500).json({ message: "Error fetching your hubs", error: error.message });
     }
 };

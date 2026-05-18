@@ -5,6 +5,7 @@ import { ClipLoader } from "react-spinners";
 import { LuSearch } from "react-icons/lu";
 import CommunityCard from '../components/CommunityCard';
 import { MdHub } from "react-icons/md";
+import { useSelector } from 'react-redux';
 
 const Home = () => {
   const [localCommunities, setLocalCommunities] = useState([]);
@@ -30,7 +31,6 @@ const Home = () => {
     }
   };
 
-  // Smart Filtering Logic for the Search Bar
   const filterCommunities = (communities) => {
     if (!searchQuery) return communities;
     const lowerQuery = searchQuery.toLowerCase();
@@ -44,37 +44,49 @@ const Home = () => {
   const displayLocal = filterCommunities(localCommunities);
   const displayExplore = filterCommunities(exploreCommunities);
 
+  const { isSearchVisible } = useSelector(state => state.user);
+
   if (loading) {
-    return <div className="w-full h-screen flex justify-center items-center bg-gray-50"><ClipLoader size={50} /></div>;
+    return (
+      // ✅ Dark loader background
+      <div className="w-full h-screen flex justify-center items-center bg-[#091413]">
+        <ClipLoader size={50} color="#4ade80" />
+      </div>
+    );
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#fbf8f2] flex flex-col items-center py-8 px-4">
+    <div className="w-full min-h-screen bg-linear-to-b from-black to-gray-900 flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-3xl">
 
         {/* Header & Search Bar */}
         <div className="mb-8">
           <div className="flex items-center gap-1 mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">Discover & Join Hubs</h1>
-            <MdHub className='ml-2' size={27}/>
+            <h1 className="text-3xl font-bold text-white">Discover & Join Hubs</h1>
+            {/* ✅ Icon color matches light text */}
+            <MdHub className='ml-2 text-gray-300' size={27} />
           </div>
-          
-          <div className="relative w-full h-12">
-            <LuSearch className="absolute left-4 top-3.5 text-gray-500" size={20} />
-            <input
-              type="text"
-              placeholder="Search by name, city, or state..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-full pl-12 pr-4 rounded-2xl border-2 border-gray-300 outline-none focus:border-black transition-colors"
-            />
-          </div>
+
+          {isSearchVisible && (
+            <div className="relative w-full h-12">
+              {/* ✅ Lighter icon for dark bg */}
+              <LuSearch className="absolute left-4 top-3.5 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search by name, city, or state..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                // ✅ Dark background, light text, dark border & focus ring
+                className="w-full h-full pl-12 pr-4 rounded-2xl bg-[#0f2320] text-white placeholder-gray-500 border-2 border-gray-700 outline-none focus:border-green-600 transition-colors"
+              />
+            </div>
+          )}
         </div>
 
         {/* Local Communities Section */}
         {displayLocal.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Hubs near you</h2>
+            <h2 className="text-xl font-bold text-gray-100 mb-4">Hubs near you</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {displayLocal.map(community => (
                 <CommunityCard key={community._id} community={community} />
@@ -86,7 +98,7 @@ const Home = () => {
         {/* Explore Communities Section */}
         {displayExplore.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
+            <h2 className="text-xl font-bold text-gray-100 mb-4">
               {searchQuery ? "Other matching hubs" : "Discover the Nation"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,7 +110,8 @@ const Home = () => {
         )}
 
         {displayLocal.length === 0 && displayExplore.length === 0 && (
-          <div className="text-center text-gray-500 mt-10">
+          // ✅ Slightly brighter for readability on dark bg
+          <div className="text-center text-gray-400 mt-10">
             <p>No communities found. Be the first to start one!</p>
           </div>
         )}

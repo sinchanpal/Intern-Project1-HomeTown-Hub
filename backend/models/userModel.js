@@ -40,6 +40,11 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        bio: {
+            type: String,
+            default: "",
+            maxLength: 160 // Keep it short and sweet like Twitter/Instagram
+        },
         resetOTP: {
             type: String
         },
