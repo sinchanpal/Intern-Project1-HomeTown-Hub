@@ -5,6 +5,7 @@ import { serverUrl } from '../App';
 import { useSelector } from 'react-redux';
 import { LuImagePlus, LuArrowLeft, LuX } from "react-icons/lu";
 import { ClipLoader } from "react-spinners";
+import emptyDp from "../assets/emptyDP.jpg";
 
 const EditCommunity = () => {
     const { id } = useParams();
@@ -23,6 +24,7 @@ const EditCommunity = () => {
     // Image States
     const [coverImage, setCoverImage] = useState(null);
     const [preview, setPreview] = useState("");
+
 
     // Fetch existing community data when the page loads
     useEffect(() => {
@@ -43,6 +45,7 @@ const EditCommunity = () => {
                 setDescription(comm.description);
                 setRules(comm.rules || []);
                 setPreview(comm.coverImage || ""); // Show existing image if they have one
+
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching community", error);
@@ -72,6 +75,7 @@ const EditCommunity = () => {
     const removeRule = (indexToRemove) => {
         setRules(rules.filter((_, index) => index !== indexToRemove));
     };
+
 
     // Submit the Form
     const handleUpdate = async (e) => {
@@ -189,6 +193,7 @@ const EditCommunity = () => {
                         {updating ? "Saving Changes..." : "Save Community Settings"}
                     </button>
                 </form>
+
 
             </div>
         </div>

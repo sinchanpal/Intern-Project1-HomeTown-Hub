@@ -13,6 +13,7 @@ import EditCommunity from './pages/EditCommunity';
 import EditProfile from './pages/EditProfile';
 import Nav from './components/Nav';
 import MyHubs from './pages/MyHubs';
+import PendingMembers from './pages/PendingMembers';
 
 export const serverUrl = "http://localhost:8000";
 
@@ -45,6 +46,7 @@ function App() {
         <Route path='/community-edit/:id' element={userData ? <EditCommunity /> : <Navigate to={'/signin'} />} />
         <Route path="/edit-profile" element={userData ? <EditProfile /> : <Navigate to={'/signin'} />} />
         <Route path="/my-hubs" element={userData ? <MyHubs /> : <Navigate to={'/signin'} />} />
+        <Route path="/pending-members/:id" element={<PendingMembers />} />
       </Routes>
 
       {/* Render Nav globally! It will hide itself if user is not logged in */}

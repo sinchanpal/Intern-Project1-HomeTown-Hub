@@ -9,9 +9,16 @@ const CommunityCard = ({ community }) => {
     const { userData } = useSelector((state) => state.user);
     const navigate = useNavigate();
 
+    // Check current status from the database data
     const alreadyMember = userData && community?.members?.includes(userData._id);
-    const [hasJustJoined, setHasJustJoined] = useState(false);
-    const isMember = alreadyMember || hasJustJoined;
+    const alreadyPending = userData && community?.pendingMembers?.includes(userData._id);
+
+    // Local state to instantly update the UI when they click the button
+    const [hasJustRequested, setHasJustRequested] = useState(false);
+
+    // Final derived states
+    const isMember = alreadyMember;
+    const isPending = alreadyPending || hasJustRequested;
 
     const handleJoin = async (e) => {
         e.stopPropagation();
@@ -19,7 +26,8 @@ const CommunityCard = ({ community }) => {
             await axios.post(`${serverUrl}/api/community/join-community/${community._id}`, {}, {
                 withCredentials: true
             });
-            setHasJustJoined(true);
+            // Instantly change button to pending state
+            setHasJustRequested(true);
         } catch (error) {
             console.error("Error joining community:", error);
             alert(error.response?.data?.message || "Could not join community");
@@ -38,19 +46,17 @@ const CommunityCard = ({ community }) => {
                 } : {}}
             >
                 <div>
-
                     <h3 className={`text-xl font-bold mb-1 ${community.coverImage ? 'text-white' : 'text-white'}`}>
                         {community.name}
                     </h3>
-
 
                     <div className={`flex items-center text-sm mb-3 ${community.coverImage ? 'text-gray-300' : 'text-gray-400'}`}>
                         <LuMapPin className="mr-1" size={16} />
                         <span className="capitalize">{community.city}, {community.state}</span>
                         <LuUsers className="ml-4 mr-1" size={16} />
-                        <span>{community.memberCount + (hasJustJoined && !alreadyMember ? 1 : 0)} Members</span>
+                        {/* Member count stays the same until a Pandit approves them */}
+                        <span>{community.memberCount} Members</span>
                     </div>
-
 
                     <p className={`text-sm mb-5 line-clamp-2 ${community.coverImage ? 'text-gray-200' : 'text-gray-300'}`}>
                         {community.description}
@@ -59,17 +65,17 @@ const CommunityCard = ({ community }) => {
 
                 <button
                     onClick={handleJoin}
-                    disabled={isMember}
+                    disabled={isMember || isPending}
                     className={`w-full py-2.5 rounded-xl font-semibold transition-colors ${isMember
-
                         ? "bg-green-900 text-green-400 border-2 border-green-700 cursor-not-allowed"
-                        : community.coverImage
-                            ? "bg-white text-black hover:bg-gray-200"
-
-                            : "bg-green-700 text-white hover:bg-green-600"
+                        : isPending
+                            ? "bg-gray-800 text-gray-400 border-2 border-gray-700 cursor-not-allowed"
+                            : community.coverImage
+                                ? "bg-white text-black hover:bg-gray-200"
+                                : "bg-green-700 text-white hover:bg-green-600"
                         }`}
                 >
-                    {isMember ? "Joined ✓" : "Join Community"}
+                    {isMember ? "Joined ✓" : isPending ? "Request Pending..." : "Join Community"}
                 </button>
             </div>
         </div>

@@ -4,8 +4,12 @@ import axios from 'axios';
 import { serverUrl } from '../App';
 import { useSelector } from 'react-redux';
 import { ClipLoader } from "react-spinners";
-import { LuArrowLeft, LuUsers, LuMapPin, LuMegaphone, LuSettings, LuShieldAlert, LuImage, LuX, LuTrash2, LuHeart, LuMessageCircle, LuSend } from "react-icons/lu";
+import { LuArrowLeft, LuUsers, LuMapPin, LuSettings, LuShieldAlert, LuImage, LuX, LuCalendar, LuMessageSquare, LuUserPlus, LuLogOut } from "react-icons/lu";
+import { TfiAnnouncement } from "react-icons/tfi";
+import Feed from '../components/Feed';
+import EventsTab from '../components/EventsTab';
 import Swal from "sweetalert2";
+
 
 const CommunityPage = () => {
     const { id } = useParams();
@@ -20,18 +24,7 @@ const CommunityPage = () => {
     const [isPinned, setIsPinned] = useState(false);
     const [posting, setPosting] = useState(false);
 
-    //State to track comment input for each individual post
-    const [commentInputs, setCommentInputs] = useState({});
-    //State to track which comment sections are open
-    const [showComments, setShowComments] = useState({});
-
-    //Function to toggle a specific post's comment section
-    const toggleComments = (postId) => {
-        setShowComments(prev => ({
-            ...prev,
-            [postId]: !prev[postId] // Flips true to false, or undefined to true
-        }));
-    };
+    const [activeTab, setActiveTab] = useState("feed"); // "feed" or "events"
 
     // Media states
     const [mediaFile, setMediaFile] = useState(null);
@@ -101,100 +94,17 @@ const CommunityPage = () => {
             setIsPinned(false);
             clearMedia();
         } catch (error) {
-            alert(error.response?.data?.message || "Failed to post");
+            Swal.fire({
+                title: "Error!",
+                text: error.response?.data?.message || "Failed to post",
+                icon: "error"
+            });
         } finally {
             setPosting(false);
         }
     };
 
 
-
-    const handleDeletePost = async (postId) => {
-
-        const result = await Swal.fire({
-            title: "Are you sure?",
-            text: "You won't be able to revert this post!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Yes, delete it!"
-        });
-
-        // If user cancels, stop execution
-        if (!result.isConfirmed) return;
-
-        try {
-            await axios.delete(
-                `${serverUrl}/api/post/delete-post/${postId}`,
-                {
-                    withCredentials: true
-                }
-            );
-
-            // Remove deleted post from UI
-            setPosts(posts.filter(post => post._id !== postId));
-
-            // Success Alert
-            Swal.fire({
-                title: "Deleted!",
-                text: "Your post has been deleted.",
-                icon: "success",
-                timer: 2000,
-                showConfirmButton: false
-            });
-
-        } catch (error) {
-            console.error("Error deleting post:", error);
-
-            // Error Alert
-            Swal.fire({
-                title: "Error!",
-                text: error.response?.data?.message || "Failed to delete post",
-                icon: "error"
-            });
-        }
-    };
-
-    // Handle Liking a Post
-    const handleLike = async (postId) => {
-        try {
-            const res = await axios.put(`${serverUrl}/api/post/like/${postId}`, {}, { withCredentials: true });
-
-            // Instantly update the UI by replacing the likes array for this specific post
-            setPosts(posts.map(post =>
-                post._id === postId ? { ...post, likes: res.data.likes } : post
-            ));
-        } catch (error) {
-            console.error("Error liking post:", error);
-        }
-    };
-
-    // Handle Comment Input Change
-    const handleCommentChange = (postId, text) => {
-        setCommentInputs(prev => ({ ...prev, [postId]: text }));
-    };
-
-    // Handle Submitting a Comment
-    const handleAddComment = async (postId) => {
-        const message = commentInputs[postId];
-        if (!message || !message.trim()) return;
-
-        try {
-            const res = await axios.post(`${serverUrl}/api/post/comment/${postId}`, { message }, { withCredentials: true });
-
-            // Instantly update the UI with the new comments array
-            setPosts(posts.map(post =>
-                post._id === postId ? { ...post, comments: res.data.comments } : post
-            ));
-
-            // Clear the input box for this post
-            setCommentInputs(prev => ({ ...prev, [postId]: "" }));
-        } catch (error) {
-            console.error("Error adding comment:", error);
-            alert(error.response?.data?.message || "Failed to add comment");
-        }
-    };
 
     const handleJoinCommunity = async () => {
         try {
@@ -204,12 +114,60 @@ const CommunityPage = () => {
 
             setCommunity(prev => ({
                 ...prev,
-                members: [...prev.members, userData._id],
-                memberCount: prev.memberCount + 1
+                pendingMembers: [...(prev.pendingMembers || []), userData._id],
             }));
+
+            alert("Join request sent! Waiting for a Pandit to approve it.");
         } catch (error) {
             console.error("Error joining community:", error);
             alert(error.response?.data?.message || "Could not join community");
+        }
+    };
+
+    //? Handle leaving the community
+    const handleLeaveCommunity = async () => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "You want to leave the community?",
+            icon: "warning",
+            showCancelButton: true,
+            background: "#0f2320",
+            color: "#fff",
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, leave it!"
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await axios.put(`${serverUrl}/api/community/leave-community/${id}`, {}, {
+                withCredentials: true
+            });
+
+            // Instantly update the UI so they are locked out and see the "Join" button again
+            setCommunity(prev => ({
+                ...prev,
+                members: prev.members.filter(member => member._id !== userData._id),
+                moderators: prev.moderators.filter(mod => mod._id !== userData._id)
+            }));
+
+            Swal.fire({
+                title: "Left!",
+                text: "You have left the community.",
+                icon: "success",
+                background: "#0f2320",
+                color: "#fff",
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error("Error leaving community:", error);
+            Swal.fire({
+                title: "Error!",
+                text: error.response?.data?.message || "Failed to leave community",
+                icon: "error"
+            });
         }
     };
 
@@ -225,7 +183,8 @@ const CommunityPage = () => {
     );
 
     const isPandit = community.moderators.some(mod => mod._id === userData?._id);
-    const isMember = community.members.includes(userData?._id);
+    const isMember = community.members.some(member => member._id === userData?._id);
+    const isPending = community.pendingMembers?.some(user => user._id === userData?._id);
 
     return (
         <div className="min-h-screen bg-linear-to-b from-black to-gray-900 flex flex-col items-center">
@@ -250,13 +209,42 @@ const CommunityPage = () => {
                             {community.name}
                         </h1>
 
-                        {isPandit && (
+                        {/* Leave Community Button (Only for members who aren't the creator) */}
+                        {isMember && community.creator !== userData?._id && (
                             <button
-                                onClick={() => navigate(`/community-edit/${id}`)}
-                                className="flex items-center bg-white/90 hover:bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm"
+                                onClick={handleLeaveCommunity}
+                                className="flex items-center bg-red-900/40 hover:bg-red-600 text-red-500 hover:text-white border border-red-800 hover:border-red-600 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm"
+                                title="Leave Community"
                             >
-                                <LuSettings className="mr-2" /> Edit Hub
+                                <LuLogOut className="mr-2" size={18} /> Leave
                             </button>
+                        )}
+
+                        {isPandit && (
+                            <div className="flex gap-3">
+
+                                {/* Pending Members Button with Notification Badge */}
+                                <button
+                                    onClick={() => navigate(`/pending-members/${id}`)}
+                                    className="relative flex items-center bg-gray-800/90 hover:bg-gray-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm"
+                                >
+                                    <LuUserPlus className="mr-2" size={18} /> Requests
+
+                                    {/* The Badge: Only shows up if there are actually pending members */}
+                                    {community.pendingMembers && community.pendingMembers.length > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full border-2 border-[#091413]">
+                                            {community.pendingMembers.length}
+                                        </span>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => navigate(`/community-edit/${id}`)}
+                                    className="flex items-center bg-white/90 hover:bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm"
+                                >
+                                    <LuSettings className="mr-2" size={18} /> Edit Hub
+                                </button>
+                            </div>
                         )}
                     </div>
 
@@ -291,204 +279,101 @@ const CommunityPage = () => {
                             </div>
                         )}
 
-                        {/* 2. POST COMPOSER */}
-                        <div className="bg-[#0f2320] rounded-2xl border-2 border-gray-700 p-4 mb-8 shadow-sm">
-                            <textarea
-                                className="w-full p-3 bg-[#091413] text-gray-100 placeholder-gray-500 rounded-xl outline-none resize-none min-h-25 border border-gray-700 focus:border-green-600 transition-all"
-                                placeholder={`What's happening in ${community.name}?`}
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                            />
-
-                            {mediaPreview && (
-                                <div className="relative mt-3 w-fit">
-                                    <button
-                                        onClick={clearMedia}
-                                        className="absolute -top-2 -right-2 bg-gray-900 text-white p-1 rounded-full border border-gray-600 hover:bg-red-600 transition-colors z-10"
-                                    >
-                                        <LuX size={16} />
-                                    </button>
-                                    {previewType === "image" && (
-                                        <img src={mediaPreview} alt="Preview" className="h-32 rounded-lg object-cover border border-gray-700" />
-                                    )}
-                                    {previewType === "video" && (
-                                        <video src={mediaPreview} className="h-32 rounded-lg object-cover border border-gray-700" controls />
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex justify-between items-center mt-4">
-                                <div className="flex items-center gap-4">
-                                    <label className="flex items-center cursor-pointer text-gray-400 hover:text-green-500 transition-colors">
-                                        <input
-                                            type="file"
-                                            accept="image/*,video/*"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                        />
-                                        <LuImage size={24} />
-                                    </label>
-
-                                    {isPandit && (
-                                        <label className="flex items-center cursor-pointer text-sm font-medium text-gray-400">
-                                            <input
-                                                type="checkbox"
-                                                className="mr-2 w-4 h-4 accent-green-500"
-                                                checked={isPinned}
-                                                onChange={(e) => setIsPinned(e.target.checked)}
-                                            />
-                                            <LuMegaphone className="mr-1" size={16} /> Pin
-                                        </label>
-                                    )}
-                                </div>
-
-                                <button
-                                    onClick={handleCreatePost}
-                                    disabled={posting || (!content.trim() && !mediaFile)}
-                                    className="bg-green-700 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-600 disabled:bg-gray-700 transition-all"
-                                >
-                                    {posting ? "Posting..." : "Post"}
-                                </button>
-                            </div>
+                        {/* TAB SWITCHER */}
+                        <div className="flex bg-[#0f2320] rounded-xl p-1 mb-6 border border-gray-700">
+                            <button
+                                onClick={() => setActiveTab("feed")}
+                                className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg font-bold transition-all duration-200 ${activeTab === "feed"
+                                    ? "bg-green-700 text-white shadow-md"
+                                    : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+                                    }`}
+                            >
+                                <LuMessageSquare size={18} /> Discussions
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("events")}
+                                className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-lg font-bold transition-all duration-200 ${activeTab === "events"
+                                    ? "bg-green-700 text-white shadow-md"
+                                    : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+                                    }`}
+                            >
+                                <LuCalendar size={18} /> Meetups & Events
+                            </button>
                         </div>
 
-                        {/* 3. FEED SECTION */}
-                        <div className="space-y-6">
-                            {posts.length > 0 ? (
-                                posts.map(post => {
-                                    const isAuthor = post.author?._id === userData?._id;
-                                    const canDelete = isAuthor || isPandit;
-                                    //Check if the current user has liked this post
-                                    const hasLiked = post.likes?.includes(userData?._id);
+                        {/* CONDITIONAL RENDERING: Show Feed OR Events based on active tab */}
+                        {activeTab === "feed" ? (
+                            <>
+                                {/* POST COMPOSER  */}
+                                <div className="bg-[#0f2320] rounded-2xl border-2 border-gray-700 p-4 mb-8 shadow-sm">
+                                    <textarea
+                                        className="w-full p-3 bg-[#091413] text-gray-100 placeholder-gray-500 rounded-xl outline-none resize-none min-h-25 border border-gray-700 focus:border-green-600 transition-all"
+                                        placeholder={`What's happening in ${community.name}?`}
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                    />
 
-                                    return (
-                                        <div key={post._id} className={`p-5 rounded-2xl border-2 shadow-sm relative ${post.isPinned ? 'border-blue-500 bg-gray-900' : 'border-gray-700 bg-[#0f2320]'}`}>
-
-                                            <div className="absolute top-4 right-4 flex items-center gap-3">
-                                                {post.isPinned && (
-                                                    <div className="flex items-center text-blue-400 text-xs font-bold uppercase tracking-wider">
-                                                        <LuMegaphone className="mr-1" size={14} /> Announcement
-                                                    </div>
-                                                )}
-                                                {canDelete && (
-                                                    <button
-                                                        onClick={() => handleDeletePost(post._id)}
-                                                        className="text-gray-500 hover:text-red-500 transition-colors p-1"
-                                                        title="Delete Post"
-                                                    >
-                                                        <LuTrash2 size={18} />
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center mb-3 pr-20">
-                                                <div className="w-10 h-10 bg-gray-700 rounded-full mr-3 flex items-center justify-center font-bold text-gray-300">
-                                                    {post.author && post.author.profilePicture ? (
-                                                        <img src={post.author.profilePicture} alt={`${post.author.name}'s profile`} className="w-full h-full object-cover rounded-full" />
-                                                    ) : (
-                                                        post.author?.name ? post.author.name[0] : 'U'
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-bold text-gray-100">{post.author?.name || "Unknown User"}</h4>
-                                                    <p className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</p>
-                                                </div>
-                                            </div>
-
-                                            {post.content && (
-                                                <p className="text-gray-300 whitespace-pre-wrap">{post.content}</p>
+                                    {mediaPreview && (
+                                        <div className="relative mt-3 w-fit">
+                                            <button
+                                                onClick={clearMedia}
+                                                className="absolute -top-2 -right-2 bg-gray-900 text-white p-1 rounded-full border border-gray-600 hover:bg-red-600 transition-colors z-10"
+                                            >
+                                                <LuX size={16} />
+                                            </button>
+                                            {previewType === "image" && (
+                                                <img src={mediaPreview} alt="Preview" className="h-32 rounded-lg object-cover border border-gray-700" />
                                             )}
-
-                                            {post.media && post.mediaType === "image" && (
-                                                <div className="mt-4 rounded-xl overflow-hidden border border-gray-700">
-                                                    <img src={post.media} alt="Post media" className="w-full max-h-125 object-cover" />
-                                                </div>
+                                            {previewType === "video" && (
+                                                <video src={mediaPreview} className="h-32 rounded-lg object-cover border border-gray-700" controls />
                                             )}
-                                            {post.media && post.mediaType === "video" && (
-                                                <div className="mt-4 rounded-xl overflow-hidden border border-gray-700 bg-black">
-                                                    <video src={post.media} controls className="w-full max-h-125" />
-                                                </div>
-                                            )}
-
-                                            {/* Action Bar (Likes & Comments Count) */}
-                                            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-gray-700/50">
-                                                <button
-                                                    onClick={() => handleLike(post._id)}
-                                                    className={`flex items-center gap-2 transition-colors ${hasLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
-                                                >
-                                                    <LuHeart className={hasLiked ? "fill-current" : ""} size={20} />
-                                                    <span className="font-medium">{post.likes?.length || 0}</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => toggleComments(post._id)}
-                                                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                                                >
-                                                    <LuMessageCircle size={20} />
-                                                    <span className="font-medium">{post.comments?.length || 0}</span>
-                                                </button>
-                                            </div>
-
-                                            {/*Comment Section (Only visible if toggled ON) */}
-                                            {showComments[post._id] && (
-                                                <div className="mt-4 bg-[#091413] rounded-xl p-4 animate-fade-in-down">
-                                                    {/* Render existing comments */}
-                                                    {post.comments && post.comments.length > 0 && (
-                                                        <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-2">
-                                                            {post.comments.map((comment, i) => (
-                                                                <div key={i} className="flex items-start gap-2">
-                                                                    <img
-                                                                        src={comment.author?.profilePicture || "https://via.placeholder.com/150"}
-                                                                        alt="avatar"
-                                                                        className="w-8 h-8 rounded-full object-cover border border-gray-700"
-                                                                    />
-                                                                    <div className="bg-[#0f2320] px-3 py-2 rounded-xl text-sm text-gray-300 w-full">
-                                                                        <span className="font-bold text-white text-xs block mb-1">
-                                                                            {comment.author?.name || "Unknown User"}
-                                                                        </span>
-                                                                        {comment.message}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {/* Input field to add a new comment */}
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Write a comment..."
-                                                            value={commentInputs[post._id] || ""}
-                                                            onChange={(e) => handleCommentChange(post._id, e.target.value)}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    handleAddComment(post._id);
-                                                                    // Optional: Force the comments open if they comment while it's closed
-                                                                    setShowComments(prev => ({ ...prev, [post._id]: true }));
-                                                                }
-                                                            }}
-                                                            className="flex-1 bg-[#0f2320] text-sm text-white px-4 py-2.5 rounded-full outline-none border border-gray-700 focus:border-green-600 transition-colors"
-                                                        />
-                                                        <button
-                                                            onClick={() => {
-                                                                handleAddComment(post._id);
-                                                                setShowComments(prev => ({ ...prev, [post._id]: true }));
-                                                            }}
-                                                            disabled={!commentInputs[post._id]?.trim()}
-                                                            className="text-white bg-green-700 p-2 hover:bg-green-600 disabled:bg-gray-700 disabled:text-gray-500 rounded-full transition-colors flex items-center justify-center"
-                                                        >
-                                                            <LuSend size={18} className="ml-0.5" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-
                                         </div>
-                                    )
-                                })
-                            ) : (
-                                <div className="text-center py-10 text-gray-500">No posts yet. Start the conversation!</div>
-                            )}
-                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-center mt-4">
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex items-center cursor-pointer text-gray-400 hover:text-green-500 transition-colors">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*,video/*"
+                                                    className="hidden"
+                                                    onChange={handleFileChange}
+                                                />
+                                                <LuImage size={24} />
+                                            </label>
+
+                                            {isPandit && (
+                                                <label className="flex items-center cursor-pointer text-sm font-medium text-gray-400">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mr-2 w-4 h-4 accent-green-500"
+                                                        checked={isPinned}
+                                                        onChange={(e) => setIsPinned(e.target.checked)}
+                                                    />
+                                                    <TfiAnnouncement className="mr-1" size={16} /> Pin
+                                                </label>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            onClick={handleCreatePost}
+                                            disabled={posting || (!content.trim() && !mediaFile)}
+                                            className="bg-green-700 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-600 disabled:bg-gray-700 transition-all"
+                                        >
+                                            {posting ? "Posting..." : "Post"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* FEED SECTION */}
+                                <div className="space-y-6">
+                                    <Feed posts={posts} setPosts={setPosts} community={community} />
+                                </div>
+                            </>
+                        ) : (
+                            /* 4. EVENTS SECTION */
+                            <EventsTab communityId={id} community={community} />
+                        )}
                     </>
                 ) : (
                     /* LOCKED STATE UI */
@@ -500,9 +385,13 @@ const CommunityPage = () => {
                         <p className="text-gray-400 mb-6">You must join {community.name} to view announcements, read posts, and participate in the discussion.</p>
                         <button
                             onClick={handleJoinCommunity}
-                            className="bg-green-700 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-600 transition-all"
+                            disabled={isPending}
+                            className={`px-8 py-3 rounded-xl font-bold transition-all ${isPending
+                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                : 'bg-green-700 text-white hover:bg-green-600'
+                                }`}
                         >
-                            Join Community
+                            {isPending ? "Request Pending..." : "Join Community"}
                         </button>
                     </div>
                 )}

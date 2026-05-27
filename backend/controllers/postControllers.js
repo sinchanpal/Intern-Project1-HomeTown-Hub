@@ -221,3 +221,64 @@ export const addComment = async (req, res) => {
         return res.status(500).json({ message: "Error adding comment", error: error.message });
     }
 };
+
+
+
+
+//? Delete a comment (Author or Moderator only)
+export const deleteComment = async (req, res) => {
+    try {
+        // We need both the post ID and the specific comment ID from the URL
+        const { postId, commentId } = req.params;
+        const userId = req.userId; // Securely from your isAuth middleware
+
+        //  Find the post
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ message: "Post not found." });
+        }
+
+        //  Find the specific comment inside the post
+        // Mongoose has a handy .id() method to find subdocuments in an array!
+        const comment = post.comments.id(commentId);
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found." });
+        }
+
+        // Find the community to check for Pandit (moderator) status
+        const community = await Community.findById(post.community);
+        if (!community) {
+            return res.status(404).json({ message: "Community not found." });
+        }
+
+        // SECURITY CHECK (RBAC): Is the user the Author OR a Moderator?
+        const isAuthor = comment.author.toString() === userId.toString();
+        const isModerator = community.moderators.includes(userId);
+
+        if (!isAuthor && !isModerator) {
+            return res.status(403).json({
+                message: "Access denied. You can only delete your own comments unless you are a community moderator."
+            });
+        }
+
+        // Delete the comment by filtering it out of the array
+        post.comments = post.comments.filter(c => c._id.toString() !== commentId);
+
+        // Save the updated post
+        await post.save();
+
+        // Populate the author data before sending the fresh array back to the frontend
+        await post.populate("comments.author", "name profilePicture");
+
+        return res.status(200).json({
+            message: "Comment deleted successfully.",
+            comments: post.comments // Send the updated comments list back!
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error deleting comment",
+            error: error.message
+        });
+    }
+};

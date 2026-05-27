@@ -43,6 +43,12 @@ const communitySchema = new mongoose.Schema(
                 ref: "User", // The list of standard users in the digital neighborhood
             }
         ],
+        pendingMembers: [  //  The waiting room for users requesting to join
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            }
+        ],
         coverImage: {
             type: String,
             default: "", // Space for a nice banner image of the city or village later

@@ -50,7 +50,8 @@ export const getSingleCommunity = async (req, res) => {
         const { id } = req.params;
 
         // We populate the moderators so we know who the Pandits are!
-        const community = await Community.findById(id).populate("moderators", "name profilePicture");
+        const community = await Community.findById(id).populate("moderators", "name profilePicture").populate("members", "name")
+            .populate("pendingMembers", "name profilePicture");
 
         if (!community) {
             return res.status(404).json({ message: "Community not found" });
@@ -110,43 +111,106 @@ export const getAllCommunities = async (req, res) => {
 }
 
 
-// This controller allows a user to join an existing community
+
+// User requests to join (Puts them in the waiting room)
 export const joinCommunity = async (req, res) => {
     try {
-        const communityId = req.params.id; // We will pass the ID in the URL
+        const communityId = req.params.id;
         const userId = req.userId; // Securely from isAuth
 
-        // 1. Find the community
         const community = await Community.findById(communityId);
-        if (!community) {
-            return res.status(404).json({ message: "Community not found" });
-        }
+        if (!community) return res.status(404).json({ message: "Community not found" });
 
-        // 2. Check if the user is already a member
+        //Check if they are ALREADY a member
         if (community.members.includes(userId)) {
             return res.status(400).json({ message: "You are already a member of this community" });
         }
 
-        // 3. Add the user to the members array
-        community.members.push(userId);
+        // Check if they have ALREADY requested to join
+        if (community.pendingMembers.includes(userId)) {
+            return res.status(400).json({ message: "Your request to join is already pending approval." });
+        }
+
+        // Add the user to the pendingMembers array instead of members
+        community.pendingMembers.push(userId);
         await community.save();
 
         return res.status(200).json({
-            message: "Successfully joined the community",
-            community // Return the updated community
+            message: "Join request sent successfully. Waiting for moderator approval.",
+            community
         });
 
     } catch (error) {
-        return res.status(500).json({
-            message: "Error joining community",
-            error: error.message
-        });
+        return res.status(500).json({ message: "Error joining community", error: error.message });
     }
-}
+};
+
+//? Pandit approves a member
+export const approveMember = async (req, res) => {
+    try {
+        const { communityId, targetUserId } = req.params;
+        const panditId = req.userId;
+
+        const community = await Community.findById(communityId);
+        if (!community) return res.status(404).json({ message: "Community not found" });
+
+        // Security: Ensure the person making the request is actually a moderator
+        if (!community.moderators.includes(panditId)) {
+            return res.status(403).json({ message: "Only moderators can approve members." });
+        }
+
+        // Remove user from pendingMembers
+        community.pendingMembers = community.pendingMembers.filter(id => id.toString() !== targetUserId.toString());
+
+        //Add user to actual members (if not already there)
+        if (!community.members.includes(targetUserId)) {
+            community.members.push(targetUserId);
+        }
+
+        await community.save();
+
+        // Return the updated arrays so the frontend can refresh instantly
+        return res.status(200).json({
+            message: "Member approved successfully.",
+            pendingMembers: community.pendingMembers,
+            members: community.members
+        });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Error approving member", error: error.message });
+    }
+};
+
+//? NEW: Pandit rejects a member
+export const rejectMember = async (req, res) => {
+    try {
+        const { communityId, targetUserId } = req.params;
+        const panditId = req.userId;
+
+        const community = await Community.findById(communityId);
+        if (!community) return res.status(404).json({ message: "Community not found" });
+
+        // Security: Ensure the person making the request is actually a moderator
+        if (!community.moderators.includes(panditId)) {
+            return res.status(403).json({ message: "Only moderators can reject members." });
+        }
+
+        // Just remove the user from the pendingMembers array
+        community.pendingMembers = community.pendingMembers.filter(id => id.toString() !== targetUserId.toString());
+        await community.save();
+
+        return res.status(200).json({
+            message: "Member request rejected.",
+            pendingMembers: community.pendingMembers
+        });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Error rejecting member", error: error.message });
+    }
+};
 
 
-
-// Edit Community Details (Pandits Only)
+//? Edit Community Details (Pandits Only)
 export const editCommunity = async (req, res) => {
     try {
         const { id } = req.params;
@@ -209,8 +273,7 @@ export const editCommunity = async (req, res) => {
 };
 
 
-
-// Get all communities the user has joined
+//? Get all communities the user has joined
 export const getMyHubs = async (req, res) => {
     try {
         const userId = req.userId; // From isAuth middleware
@@ -222,5 +285,74 @@ export const getMyHubs = async (req, res) => {
         return res.status(200).json({ myCommunities });
     } catch (error) {
         return res.status(500).json({ message: "Error fetching your hubs", error: error.message });
+    }
+};
+
+
+//? User voluntarily leaves the community
+export const leaveCommunity = async (req, res) => {
+    try {
+        const communityId = req.params.id;
+        const userId = req.userId;
+
+        const community = await Community.findById(communityId);
+        if (!community) return res.status(404).json({ message: "Community not found" });
+
+        // Security Check : The Creator cannot leave. They must delete the hub or transfer ownership.
+        if (community.creator.toString() === userId.toString()) {
+            return res.status(400).json({ message: "The creator cannot leave the community. You must delete the hub instead." });
+        }
+
+        // 1. Remove user from the members array
+        community.members = community.members.filter(id => id.toString() !== userId.toString());
+        
+        // 2. Remove user from the moderators array (just in case they were a Pandit)
+        community.moderators = community.moderators.filter(id => id.toString() !== userId.toString());
+
+        await community.save();
+
+        return res.status(200).json({
+            message: "You have successfully left the community.",
+            community
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Error leaving community", error: error.message });
+    }
+};
+
+//? Moderator removes a specific member
+export const removeMember = async (req, res) => {
+    try {
+        const { communityId, targetUserId } = req.params;
+        const panditId = req.userId;
+
+        const community = await Community.findById(communityId);
+        if (!community) return res.status(404).json({ message: "Community not found" });
+
+        // Security Check : Is the person requesting the removal actually a Moderator?
+        if (!community.moderators.includes(panditId)) {
+            return res.status(403).json({ message: "Only moderators can remove members." });
+        }
+
+        // Security Check : Prevent removing the Creator!
+        if (community.creator.toString() === targetUserId.toString()) {
+            return res.status(403).json({ message: "You cannot remove the community creator." });
+        }
+
+        // 1. Remove from members array
+        community.members = community.members.filter(id => id.toString() !== targetUserId.toString());
+        
+        // 2. Remove from moderators array (if they were a Pandit being kicked out)
+        community.moderators = community.moderators.filter(id => id.toString() !== targetUserId.toString());
+
+        await community.save();
+
+        return res.status(200).json({
+            message: "Member removed successfully.",
+            members: community.members,
+            moderators: community.moderators
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Error removing member", error: error.message });
     }
 };
