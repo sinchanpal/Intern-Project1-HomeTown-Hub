@@ -1,5 +1,7 @@
 import User from "../models/userModel.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
+import Notification from "../models/notificationModel.js";
+import Community from "../models/communityModel.js";
 
 // This controller is used to get the current user details.
 export const getCurrentUser = async (req, res) => {
@@ -40,11 +42,11 @@ export const updateUserProfile = async (req, res) => {
         if (req.file) {
             const localFilePath = req.file.path;
             const avatarUrl = await uploadOnCloudinary(localFilePath);
-            
+
             if (!avatarUrl) {
                 return res.status(500).json({ message: "Failed to upload profile picture." });
             }
-            user.profilePicture = avatarUrl; 
+            user.profilePicture = avatarUrl;
         }
 
         // 3. Update Text Fields (only if they were provided in the request)
@@ -63,9 +65,38 @@ export const updateUserProfile = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).json({ 
-            message: "Error updating profile", 
-            error: error.message 
+        return res.status(500).json({
+            message: "Error updating profile",
+            error: error.message
         });
+    }
+};
+
+
+// Fetch all notifications for the logged-in user
+export const getMyNotifications = async (req, res) => {
+    try {
+        const notifications = await Notification.find({ recipient: req.userId })
+            .sort({ createdAt: -1 }) // Newest first
+            .populate({ path: "sender", select: "name profilePicture" }) // Safer object syntax
+            .populate({ path: "community", select: "name" });
+        return res.status(200).json({ notifications });
+    } catch (error) {
+        return res.status(500).json({ message: "Error fetching notifications", error: error.message });
+    }
+};
+
+// Mark all unread notifications as read
+export const markNotificationsAsRead = async (req, res) => {
+    try {
+
+        await Notification.updateMany(
+            { recipient: req.userId, isRead: false },
+            { $set: { isRead: true } }
+        );
+
+        return res.status(200).json({ message: "Notifications marked as read" });
+    } catch (error) {
+        return res.status(500).json({ message: "Error updating notifications", error: error.message });
     }
 };

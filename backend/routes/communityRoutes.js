@@ -1,7 +1,7 @@
 import express from "express";
 import { isAuth } from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multer.js";
-import { approveMember, createCommunity, editCommunity, getAllCommunities, getMyHubs, getSingleCommunity, joinCommunity, leaveCommunity, rejectMember, removeMember } from "../controllers/communityControllers.js";
+import { approveMember, createCommunity, demoteMember, editCommunity, getAllCommunities, getMyHubs, getSingleCommunity, joinCommunity, leaveCommunity, promoteMember, rejectMember, removeMember } from "../controllers/communityControllers.js";
 
 const communityRouter = express.Router();
 
@@ -15,5 +15,7 @@ communityRouter.put("/edit-community/:id", isAuth, upload.single("coverImage"), 
 communityRouter.get("/my-hubs", isAuth, getMyHubs);  // route to fetch all communities the logged-in user is a member of
 communityRouter.put("/leave-community/:id", isAuth, leaveCommunity);
 communityRouter.put("/remove-member/:communityId/:targetUserId", isAuth, removeMember);
+communityRouter.put("/promote-member/:communityId/:targetUserId", isAuth, promoteMember);
+communityRouter.put("/demote-member/:communityId/:targetUserId", isAuth, demoteMember);
 
 export default communityRouter;

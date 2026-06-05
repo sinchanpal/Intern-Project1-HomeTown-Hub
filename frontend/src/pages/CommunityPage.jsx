@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { ClipLoader } from "react-spinners";
 import { LuArrowLeft, LuUsers, LuMapPin, LuSettings, LuShieldAlert, LuImage, LuX, LuCalendar, LuMessageSquare, LuUserPlus, LuLogOut } from "react-icons/lu";
 import { TfiAnnouncement } from "react-icons/tfi";
+import { TiThMenu } from "react-icons/ti";
 import Feed from '../components/Feed';
 import EventsTab from '../components/EventsTab';
 import Swal from "sweetalert2";
@@ -25,6 +26,9 @@ const CommunityPage = () => {
     const [posting, setPosting] = useState(false);
 
     const [activeTab, setActiveTab] = useState("feed"); // "feed" or "events"
+
+    // State to toggle the dropdown menu
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     // Media states
     const [mediaFile, setMediaFile] = useState(null);
@@ -191,7 +195,7 @@ const CommunityPage = () => {
 
             {/* 1. HEADER SECTION */}
             <div
-                className={`w-full py-10 px-4 flex justify-center shadow-xl bg-cover bg-center overflow-hidden ${!community.coverImage ? 'bg-[#0f2320] border-b-2 border-gray-700' : ''}`}
+                className={`w-full py-10 px-4 flex justify-center shadow-xl bg-cover bg-center  ${!community.coverImage ? 'bg-[#0f2320] border-b-2 border-gray-700' : ''}`}
                 style={community.coverImage ? {
                     backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.8)), url(${community.coverImage})`
                 } : {}}
@@ -209,41 +213,69 @@ const CommunityPage = () => {
                             {community.name}
                         </h1>
 
-                        {/* Leave Community Button (Only for members who aren't the creator) */}
-                        {isMember && community.creator !== userData?._id && (
-                            <button
-                                onClick={handleLeaveCommunity}
-                                className="flex items-center bg-red-900/40 hover:bg-red-600 text-red-500 hover:text-white border border-red-800 hover:border-red-600 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm"
-                                title="Leave Community"
-                            >
-                                <LuLogOut className="mr-2" size={18} /> Leave
-                            </button>
-                        )}
-
-                        {isPandit && (
-                            <div className="flex gap-3">
-
-                                {/* Pending Members Button with Notification Badge */}
+                        {/* Unified Settings Menu (Visible to Members & Pandits) */}
+                        {isMember && (
+                            <div className="relative">
                                 <button
-                                    onClick={() => navigate(`/pending-members/${id}`)}
-                                    className="relative flex items-center bg-gray-800/90 hover:bg-gray-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm"
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="flex items-center border border-green-400 bg-gray-800/90 hover:bg-gray-700 text-white p-2.5 rounded-xl transition-colors shadow-sm"
                                 >
-                                    <LuUserPlus className="mr-2" size={18} /> Requests
-
-                                    {/* The Badge: Only shows up if there are actually pending members */}
-                                    {community.pendingMembers && community.pendingMembers.length > 0 && (
-                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full border-2 border-[#091413]">
-                                            {community.pendingMembers.length}
-                                        </span>
+                                    <TiThMenu size={20} />
+                                    {/* Red dot indicator if Pandits have pending requests */}
+                                    {isPandit && community.pendingMembers && community.pendingMembers.length > 0 && (
+                                        <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-[#091413]"></span>
                                     )}
                                 </button>
 
-                                <button
-                                    onClick={() => navigate(`/community-edit/${id}`)}
-                                    className="flex items-center bg-white/90 hover:bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm"
-                                >
-                                    <LuSettings className="mr-2" size={18} /> Edit Hub
-                                </button>
+                                {/* DROPDOWN MENU */}
+                                {isMenuOpen && (
+                                    <div className="absolute right-0 mt-2 w-56 bg-[#0f2320] border border-green-400 rounded-xl shadow-2xl z-50 overflow-hidden animate-fade-in-down">
+
+                                        {/* All Members (Visible to everyone in the hub) */}
+                                        <button
+                                            onClick={() => navigate(`/all-members/${id}`)}
+                                            className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-200 hover:bg-gray-800 transition-colors text-left"
+                                        >
+                                            <LuUsers className="mr-3 text-orange-400" size={18} /> Members
+                                        </button>
+
+                                        {/* Pandit Only Options */}
+                                        {isPandit && (
+                                            <>
+                                                <button
+                                                    onClick={() => navigate(`/pending-members/${id}`)}
+                                                    className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-200 hover:bg-gray-800 transition-colors text-left border-t border-gray-700/50"
+                                                >
+                                                    <div className="flex items-center">
+                                                        <LuUserPlus className="mr-3 text-green-400" size={18} /> Requests
+                                                    </div>
+                                                    {community.pendingMembers && community.pendingMembers.length > 0 && (
+                                                        <span className="bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                                                            {community.pendingMembers.length}
+                                                        </span>
+                                                    )}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => navigate(`/community-edit/${id}`)}
+                                                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-200 hover:bg-gray-800 transition-colors text-left border-t border-gray-700/50"
+                                                >
+                                                    <LuSettings className="mr-3 text-gray-400" size={18} /> Edit Hub
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Leave Community (Hidden for Creator) */}
+                                        {community.creator !== userData?._id && (
+                                            <button
+                                                onClick={handleLeaveCommunity}
+                                                className="w-full flex items-center px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors text-left border-t border-gray-700/50"
+                                            >
+                                                <LuLogOut className="mr-3" size={18} /> Leave Hub
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

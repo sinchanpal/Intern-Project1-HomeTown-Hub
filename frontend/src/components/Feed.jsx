@@ -80,7 +80,7 @@ const Feed = ({ posts, setPosts, community }) => {
 
         try {
             // Updated route to match your new controller setup if needed
-            const res = await axios.post(`${serverUrl}/api/post/comment/${postId}`, { message }, { withCredentials: true });
+            const res = await axios.post(`${serverUrl}/api/post/add-comment/${postId}`, { message }, { withCredentials: true });
             setPosts(posts.map(post =>
                 post._id === postId ? { ...post, comments: res.data.comments } : post
             ));

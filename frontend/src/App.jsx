@@ -14,6 +14,7 @@ import EditProfile from './pages/EditProfile';
 import Nav from './components/Nav';
 import MyHubs from './pages/MyHubs';
 import PendingMembers from './pages/PendingMembers';
+import AllMembers from './pages/AllMembers';
 
 export const serverUrl = "http://localhost:8000";
 
@@ -47,6 +48,7 @@ function App() {
         <Route path="/edit-profile" element={userData ? <EditProfile /> : <Navigate to={'/signin'} />} />
         <Route path="/my-hubs" element={userData ? <MyHubs /> : <Navigate to={'/signin'} />} />
         <Route path="/pending-members/:id" element={<PendingMembers />} />
+        <Route path="/all-members/:id" element={<AllMembers />} />
       </Routes>
 
       {/* Render Nav globally! It will hide itself if user is not logged in */}

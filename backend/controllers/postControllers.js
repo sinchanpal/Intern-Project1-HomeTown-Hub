@@ -1,6 +1,9 @@
 import Community from "../models/communityModel.js";
 import Post from "../models/postModel.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js"
+import Notification from "../models/notificationModel.js";
+import { userSocketMap } from "../index.js";
+import User from "../models/userModel.js";
 
 
 //?Create a new post inside a community (Now with Media Upload Support)
@@ -72,6 +75,35 @@ export const createPost = async (req, res) => {
 
         // Populate author data before sending to frontend
         await newPost.populate("author", "name profilePicture");
+
+        // ==========================================
+        // NOTIFICATION LOGIC START
+        // ==========================================
+        const io = req.app.get("io");
+
+        // Notify all members of the community EXCEPT the author of the post
+        const notificationPromises = community.members.map(async (memberId) => {
+            if (memberId.toString() !== userId.toString()) {
+                const newNotif = await Notification.create({
+                    recipient: memberId,
+                    sender: userId,
+                    type: "NEW_POST",
+                    community: communityId,
+                    post: newPost._id,
+                    message: `${newPost.author.name} shared a new post in ${community.name}.`
+                });
+
+                // If this specific member is online, send it to them instantly!
+                const targetSocketId = userSocketMap[memberId.toString()];
+                if (targetSocketId) {
+                    io.to(targetSocketId).emit("newNotification", newNotif);
+                }
+            }
+        });
+
+        // Wait for all notifications to finish saving
+        await Promise.all(notificationPromises);
+        // ==========================================
 
         return res.status(201).json({
             message: "Post created successfully",
@@ -172,6 +204,39 @@ export const toggleLike = async (req, res) => {
 
         await post.save();
 
+        // ==========================================
+        //  NOTIFICATION LOGIC START
+        // ==========================================
+
+        // ONLY send a notification if they LIKED the post (not unliked)
+        // AND make sure the liker is NOT the author of the post (don't notify yourself)
+        if (!hasLiked && post.author.toString() !== userId.toString()) {
+
+            // 1. Get the liker's name
+            const sender = await User.findById(userId).select("name");
+
+            // 2. Create the notification in the database
+            const newNotif = await Notification.create({
+                recipient: post.author, // The creator of the post
+                sender: userId,         // The person who clicked like
+                type: "LIKE",
+                community: post.community, // This helps the frontend navigate on click
+                post: post._id,
+                message: `${sender.name} liked your post.`
+            });
+
+            // 3. Send it via WebSockets if the author is online
+            const io = req.app.get("io");
+            const targetSocketId = userSocketMap[post.author.toString()];
+
+            if (targetSocketId) {
+                io.to(targetSocketId).emit("newNotification", newNotif);
+            }
+        }
+
+        // ==========================================
+
+
         return res.status(200).json({
             message: hasLiked ? "Post unliked" : "Post liked",
             likes: post.likes // Send back the updated likes array
@@ -211,6 +276,40 @@ export const addComment = async (req, res) => {
         // To show the new comment instantly on the frontend with the user's name and picture, 
         // we need to populate the author of the comments.
         await post.populate("comments.author", "name profilePicture");
+
+        // ==========================================
+        // NOTIFICATION LOGIC START
+        // ==========================================
+
+        // ONLY send a notification if the commenter is NOT the author of the post
+        if (post.author.toString() !== userId.toString()) {
+
+            // 1. Get the commenter's name
+            const sender = await User.findById(userId).select("name");
+
+            // Create a short preview of the comment (max 20 characters)
+            const commentPreview = message.length > 20 ? message.substring(0, 20) + "..." : message;
+
+            // 2. Create the notification in the database
+            const newNotif = await Notification.create({
+                recipient: post.author, // The creator of the post
+                sender: userId,         // The person who commented
+                type: "COMMENT",
+                community: post.community,
+                post: post._id,
+                message: `${sender.name} commented: "${commentPreview}"`
+            });
+
+            // 3. Send it via WebSockets if the author is online
+            const io = req.app.get("io");
+            const targetSocketId = userSocketMap[post.author.toString()];
+
+            if (targetSocketId) {
+                io.to(targetSocketId).emit("newNotification", newNotif);
+            }
+        }
+
+        // ==========================================
 
         return res.status(201).json({
             message: "Comment added successfully",

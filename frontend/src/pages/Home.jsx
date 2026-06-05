@@ -4,7 +4,6 @@ import { serverUrl } from '../App';
 import { ClipLoader } from "react-spinners";
 import { LuSearch } from "react-icons/lu";
 import CommunityCard from '../components/CommunityCard';
-import { MdHub } from "react-icons/md";
 import { useSelector } from 'react-redux';
 
 const Home = () => {
@@ -63,8 +62,6 @@ const Home = () => {
         <div className="mb-8">
           <div className="flex items-center gap-1 mb-4">
             <h1 className="text-3xl font-bold text-white">Discover & Join Hubs</h1>
-            {/* ✅ Icon color matches light text */}
-            <MdHub className='ml-2 text-gray-300' size={27} />
           </div>
 
           {isSearchVisible && (
