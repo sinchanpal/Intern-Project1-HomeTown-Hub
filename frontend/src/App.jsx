@@ -15,6 +15,7 @@ import Nav from './components/Nav';
 import MyHubs from './pages/MyHubs';
 import PendingMembers from './pages/PendingMembers';
 import AllMembers from './pages/AllMembers';
+import Profile from './pages/Profile';
 
 export const serverUrl = "http://localhost:8000";
 
@@ -45,6 +46,7 @@ function App() {
         <Route path='/create-community' element={userData ? <CreateCommunity /> : <Navigate to={'/signin'} />} />
         <Route path='/community-page/:id' element={userData ? <CommunityPage /> : <Navigate to={'/signin'} />} />
         <Route path='/community-edit/:id' element={userData ? <EditCommunity /> : <Navigate to={'/signin'} />} />
+        <Route path="/profile/:userId" element={userData ? <Profile /> : <Navigate to={'/signin'} />} />
         <Route path="/edit-profile" element={userData ? <EditProfile /> : <Navigate to={'/signin'} />} />
         <Route path="/my-hubs" element={userData ? <MyHubs /> : <Navigate to={'/signin'} />} />
         <Route path="/pending-members/:id" element={<PendingMembers />} />

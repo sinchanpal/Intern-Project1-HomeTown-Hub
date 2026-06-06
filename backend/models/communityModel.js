@@ -66,7 +66,7 @@ const communitySchema = new mongoose.Schema(
 
 // Virtual field to dynamically calculate the member count without needing a separate database column
 communitySchema.virtual('memberCount').get(function () {
-    return this.members.length;
+    return this.members?.length || 0;
 });
 
 // Ensure virtual fields are included when converting the document to JSON

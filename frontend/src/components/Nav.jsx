@@ -6,7 +6,7 @@ import { serverUrl } from '../App';
 import { useSocket } from '../context/SocketContext';
 
 import { TiHome } from "react-icons/ti";
-import { LuSearch, LuBell } from "react-icons/lu";
+import { LuSearch, LuBell, LuX } from "react-icons/lu";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
 import { setSearchVisible, toggleSearchBar } from '../redux/userSlice';
@@ -82,6 +82,26 @@ const Nav = () => {
         }
     };
 
+
+    // 4. Handle Deleting a single notification
+    const handleDeleteNotification = async (e, notificationId) => {
+        e.stopPropagation(); // Prevents the click from triggering the navigation wrapper!
+
+        // Optimistically remove it from the UI instantly
+        setNotifications(prev => prev.filter(n => n._id !== notificationId));
+
+        try {
+            await axios.delete(`${serverUrl}/api/user/notifications/delete/${notificationId}`, {
+                withCredentials: true
+            });
+        } catch (error) {
+            console.error("Error deleting notification", error);
+            // Optionally, you could refetch notifications here if the delete failed
+        }
+    };
+
+
+
     const handleSearchClick = () => {
         if (location.pathname !== '/' && location.pathname !== '/my-hubs') {
             navigate('/');
@@ -120,7 +140,7 @@ const Nav = () => {
                 className={`w-6 h-6 cursor-pointer transition-colors ${location.pathname === '/my-hubs' ? 'text-white' : 'text-gray-400 hover:text-white'}`}
             />
 
-            {/* NEW: Notification Bell */}
+            {/* Notification Bell */}
             <div className="relative">
                 <div onClick={handleBellClick} className="relative cursor-pointer">
                     <LuBell className={`w-6 h-6 transition-colors ${isDropdownOpen || unreadCount > 0 ? 'text-white' : 'text-gray-400 hover:text-white'}`} />
@@ -165,6 +185,14 @@ const Nav = () => {
                                                 {new Date(notif.createdAt).toLocaleDateString()}
                                             </span>
                                         </div>
+
+                                        <button
+                                            onClick={(e) => handleDeleteNotification(e, notif._id)}
+                                            className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition-colors p-1"
+                                            title="Dismiss Notification"
+                                        >
+                                            <LuX size={16} />
+                                        </button>
                                     </div>
                                 ))
                             )}
@@ -175,8 +203,8 @@ const Nav = () => {
 
             {/* Profile Avatar */}
             <div
-                className={`w-8 h-8 rounded-full cursor-pointer overflow-hidden border-2 transition-colors ${location.pathname === '/edit-profile' ? 'border-white' : 'border-gray-500 hover:border-gray-300'}`}
-                onClick={() => { setIsDropdownOpen(false); navigate('/edit-profile'); }}
+                className={`w-8 h-8 rounded-full cursor-pointer overflow-hidden border-2 transition-colors ${location.pathname === `/profile/${userData._id}` ? 'border-white' : 'border-gray-500 hover:border-gray-300'}`}
+                onClick={() => { setIsDropdownOpen(false); navigate(`/profile/${userData._id}`); }}
             >
                 {userData.profilePicture ? (
                     <img src={userData.profilePicture} alt="Profile" className="w-full h-full object-cover" />

@@ -97,6 +97,7 @@ export const createPost = async (req, res) => {
                 const targetSocketId = userSocketMap[memberId.toString()];
                 if (targetSocketId) {
                     io.to(targetSocketId).emit("newNotification", newNotif);
+                    io.to(targetSocketId).emit("newPost", newPost); //send the new post itself so it can appear in real-time on their feed if they're viewing the community
                 }
             }
         });

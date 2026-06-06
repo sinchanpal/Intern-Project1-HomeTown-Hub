@@ -214,7 +214,7 @@ export const approveMember = async (req, res) => {
             sender: panditId,             // The Pandit who clicked approve
             type: "REQUEST_APPROVED",
             community: communityId,
-            message: `Your request to join ${community.name} was approved!`
+            message: `🎉Your request to join ${community.name} was approved! You can now participate in discussions and events.`
         });
 
         // Check if they are currently online right now
@@ -256,6 +256,29 @@ export const rejectMember = async (req, res) => {
         // Just remove the user from the pendingMembers array
         community.pendingMembers = community.pendingMembers.filter(id => id.toString() !== targetUserId.toString());
         await community.save();
+
+        // ==========================================
+        //  NOTIFICATION LOGIC START USING SOCKET.IO
+        // ==========================================
+
+        // Save it to the database so it is waiting for them when they log in
+        const newNotification = await Notification.create({
+            recipient: targetUserId,      // The person who requested to join
+            sender: panditId,             // The Pandit who clicked reject
+            type: "REQUEST_REJECTED",
+            community: communityId,
+            message: `❌ Your request to join ${community.name} was rejected by the moderators. Don't be discouraged, you can explore other communities or try joining again later!`
+        });
+
+        // Check if they are currently online right now
+        const io = req.app.get("io"); // Grab the socket server we attached in index.js
+        const targetSocketId = userSocketMap[targetUserId]; // Look up their socket ID
+
+        if (targetSocketId) {
+            // If they are online, shoot the notification directly to their screen!
+            io.to(targetSocketId).emit("newNotification", newNotification);
+        }
+        // ==========================================
 
         return res.status(200).json({
             message: "Member request rejected.",

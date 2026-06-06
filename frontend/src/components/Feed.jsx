@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { serverUrl } from '../App';
 import axios from 'axios';
 import Swal from "sweetalert2";
-import { LuTrash2, LuHeart, LuMessageCircle, LuSend } from "react-icons/lu";
+import { LuTrash2, LuHeart, LuMessageCircle, LuSend, LuShare2 } from "react-icons/lu";
 import { TfiAnnouncement } from "react-icons/tfi";
 import { useSelector } from 'react-redux';
 import emptyDp from "../assets/emptyDP.jpg";
+import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../context/SocketContext';
 
 
 // ADDED setPosts to the incoming props!
@@ -16,6 +18,31 @@ const Feed = ({ posts, setPosts, community }) => {
 
     const [commentInputs, setCommentInputs] = useState({});
     const [showComments, setShowComments] = useState({});
+    const navigate = useNavigate();
+
+    const { socket } = useSocket();
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewPost = (incomingPost) => {
+            // SECURITY/UX CHECK: Only add the post to the feed IF it belongs to the community currently being viewed!
+            const postCommunityId = incomingPost.community._id || incomingPost.community;
+
+            if (postCommunityId.toString() === community._id.toString()) {
+                // Add the new post to the VERY TOP of the feed
+                setPosts((prevPosts) => [incomingPost, ...prevPosts]);
+            }
+        };
+
+        // Turn on the listener
+        socket.on("newPost", handleNewPost);
+
+        // Cleanup: Turn off the listener when they leave the page so it doesn't duplicate
+        return () => {
+            socket.off("newPost", handleNewPost);
+        };
+    }, [socket, community._id, setPosts]);
 
     const handleDeletePost = async (postId) => {
         const result = await Swal.fire({
@@ -111,6 +138,29 @@ const Feed = ({ posts, setPosts, community }) => {
         }
     };
 
+
+    //Handle Share Logic
+    const handleShare = () => {
+        // Construct the URL to the current community
+        const shareUrl = `${window.location.origin}/community-page/${community._id}`;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            // Show a sleek toast notification
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Link copied to clipboard!',
+                showConfirmButton: false,
+                timer: 2000,
+                background: '#0f2320',
+                color: '#fff'
+            });
+        }).catch(err => {
+            console.error("Failed to copy text: ", err);
+        });
+    };
+
     return (
         <div>
             {posts.length > 0 ? (
@@ -143,7 +193,7 @@ const Feed = ({ posts, setPosts, community }) => {
                             </div>
 
                             <div className="flex items-center mb-3 pr-20">
-                                <div className="w-10 h-10 bg-gray-700 rounded-full mr-3 flex items-center justify-center font-bold text-gray-300">
+                                <div className="w-10 h-10 bg-gray-700 rounded-full mr-3 flex items-center justify-center font-bold text-gray-300 cursor-pointer" onClick={() => post.author && post.author._id && navigate(`/profile/${post.author._id}`)}>
                                     {post.author && post.author.profilePicture ? (
                                         <img src={post.author.profilePicture} alt={`${post.author.name}'s profile`} className="w-full h-full object-cover rounded-full" />
                                     ) : (
@@ -151,7 +201,7 @@ const Feed = ({ posts, setPosts, community }) => {
                                     )}
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-gray-100">{post.author?.name || "Unknown User"}</h4>
+                                    <h4 className="font-bold text-gray-100 cursor-pointer" onClick={() => post.author && post.author._id && navigate(`/profile/${post.author._id}`)}>{post.author?.name || "Unknown User"}</h4>
                                     <p className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
@@ -179,12 +229,22 @@ const Feed = ({ posts, setPosts, community }) => {
                                     <LuHeart className={hasLiked ? "fill-current" : ""} size={20} />
                                     <span className="font-medium">{post.likes?.length || 0}</span>
                                 </button>
+
                                 <button
                                     onClick={() => toggleComments(post._id)}
                                     className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                                 >
                                     <LuMessageCircle size={20} />
                                     <span className="font-medium">{post.comments?.length || 0}</span>
+                                </button>
+
+                                <button
+                                    onClick={handleShare}
+                                    className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors ml-auto"
+                                    title="Copy Community Link"
+                                >
+                                    <LuShare2 size={20} />
+                                    <span className="font-medium hidden sm:inline text-sm">Share</span>
                                 </button>
                             </div>
 

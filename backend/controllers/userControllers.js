@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import { uploadOnCloudinary } from "../config/cloudinary.js";
 import Notification from "../models/notificationModel.js";
 import Community from "../models/communityModel.js";
+import Post from "../models/postModel.js";
 
 // This controller is used to get the current user details.
 export const getCurrentUser = async (req, res) => {
@@ -24,6 +25,34 @@ export const getCurrentUser = async (req, res) => {
         return res.status(500).json({ message: "Internal server error in getCurrentUser", error: error.message });
     }
 }
+
+
+// Fetch a specific user's public profile and their posts
+export const getUserProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Find the user but EXCLUDE private data (-password and -email)
+        const user = await User.findById(userId).select("-password -email");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        //fetch all the community where the user is a member or moderator
+        const userHubs = await Community.find({ $or: [{ members: userId }, { moderators: userId }] }).select("name");
+
+
+        return res.status(200).json({
+            user,
+            hubs: userHubs
+        });
+
+    } catch (error) {
+        console.error("Profile Fetch Error:", error);
+        return res.status(500).json({ message: "Error fetching user profile", error: error.message });
+    }
+};
 
 
 // This controller allows a user to update their profile information, including their profile picture and bio.
@@ -100,3 +129,29 @@ export const markNotificationsAsRead = async (req, res) => {
         return res.status(500).json({ message: "Error updating notifications", error: error.message });
     }
 };
+
+
+
+//Delete/Dismiss an individual notification
+export const deleteNotification = async (req, res) => {
+    try {
+        const { notificationId } = req.params;
+        const userId = req.userId;
+
+        // Find the notification and delete it ONLY if it belongs to the requesting user
+        const notification = await Notification.findOneAndDelete({
+            _id: notificationId,
+            recipient: userId
+        });
+
+        if (!notification) {
+            return res.status(404).json({ message: "Notification not found or unauthorized to delete." });
+        }
+
+        return res.status(200).json({ message: "Notification dismissed successfully." });
+    } catch (error) {
+        return res.status(500).json({ message: "Error dismissing notification", error: error.message });
+    }
+};
+
+
