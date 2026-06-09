@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Fix for SweetAlert2 Dropdown in Dark Mode */
+.swal2-popup .swal2-select {
+    background-color: #16191f !important;
+    color: white !important;
+    border-color: #374151 !important; /* Matches Tailwind's gray-700 */
+}
+
+.swal2-popup .swal2-select option {
+    background-color: #16191f !important;
+    color: white !important;
+}

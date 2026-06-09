@@ -10,6 +10,7 @@ import postRouter from './routes/postRoutes.js';
 import eventRouter from './routes/eventRoutes.js';
 import http from 'http';
 import { Server } from 'socket.io';
+import adminRouter from './routes/adminRoutes.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -73,6 +74,9 @@ app.use("/api/user", userRouter); // Use the userRouter for routes starting with
 app.use("/api/community", communityRouter); // Use the communityRouter for routes starting with /api/community
 app.use("/api/post", postRouter); // Use the postRouter for routes starting with /api/post
 app.use("/api/event", eventRouter); // Use the eventRouter for routes starting with /api/event
+
+//? Admin Routes
+app.use("/api/admin", adminRouter);
 
 // Start the server and listen on the specified port
 const PORT = process.env.PORT || 5000;

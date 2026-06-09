@@ -4,6 +4,7 @@ import { uploadOnCloudinary } from "../config/cloudinary.js"
 import Notification from "../models/notificationModel.js";
 import { userSocketMap } from "../index.js";
 import User from "../models/userModel.js";
+import Report from "../models/reportModel.js";
 
 
 //?Create a new post inside a community (Now with Media Upload Support)
@@ -380,5 +381,32 @@ export const deleteComment = async (req, res) => {
             message: "Error deleting comment",
             error: error.message
         });
+    }
+};
+
+
+
+// User reports a post
+export const reportPost = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const { reason } = req.body;
+        const userId = req.userId;
+
+        // Prevent duplicate reports
+        const existingReport = await Report.findOne({ reportedBy: userId, post: postId });
+        if (existingReport) {
+            return res.status(400).json({ message: "You have already reported this post." });
+        }
+
+        await Report.create({
+            reportedBy: userId,
+            post: postId,
+            reason
+        });
+
+        return res.status(201).json({ message: "Post reported successfully. Admins will review it." });
+    } catch (error) {
+        return res.status(500).json({ message: "Error reporting post", error: error.message });
     }
 };

@@ -16,6 +16,13 @@ import MyHubs from './pages/MyHubs';
 import PendingMembers from './pages/PendingMembers';
 import AllMembers from './pages/AllMembers';
 import Profile from './pages/Profile';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './pages/admin/AdminLayout';
+import Overview from './pages/admin/Overview';
+import Users from './pages/admin/Users';
+import Communities from './pages/admin/Communities';
+import Reports from './pages/admin/Reports';
+
 
 export const serverUrl = "http://localhost:8000";
 
@@ -39,6 +46,22 @@ function App() {
     // Added pb-24 here so the bottom content doesn't get hidden behind the Nav!
     <div className="min-h-screen relative pb-14 bg-gray-900">
       <Routes>
+
+        {/* ===== ADMIN ROUTES (Protected by AdminRoute) ===== */}
+        <Route element={<AdminRoute />}>
+          {/* Everything inside AdminLayout will have the Sidebar! */}
+          <Route path="/admin" element={<AdminLayout />}>
+            {/* The index route loads when visiting /admin exactly */}
+            <Route index element={<Overview/>} />
+
+            <Route path="users" element={<Users/>} />
+            <Route path="communities" element={<Communities/>} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
+        </Route>
+
+
+
         <Route path='/' element={userData ? <Home /> : <Navigate to={'/signin'} />} />
         <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to={'/'} />} />
         <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to={'/'} />} />

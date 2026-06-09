@@ -7,6 +7,7 @@ import { useSocket } from '../context/SocketContext';
 
 import { TiHome } from "react-icons/ti";
 import { LuSearch, LuBell, LuX } from "react-icons/lu";
+import { MdAdminPanelSettings } from "react-icons/md";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { HiUsers } from "react-icons/hi2";
 import { setSearchVisible, toggleSearchBar } from '../redux/userSlice';
@@ -200,6 +201,18 @@ const Nav = () => {
                     </div>
                 )}
             </div>
+
+            {/* =====  HIDDEN ADMIN BUTTON ===== */}
+            {userData.role === 'admin' && (
+                <MdAdminPanelSettings
+                    onClick={() => { setIsDropdownOpen(false); navigate('/admin'); }}
+                    className={`w-6 h-6 cursor-pointer transition-colors ${location.pathname.startsWith('/admin')
+                        ? 'text-emerald-400'
+                        : 'text-gray-400 hover:text-emerald-400'
+                        }`}
+                    title="Admin Portal"
+                />
+            )}
 
             {/* Profile Avatar */}
             <div

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { serverUrl } from '../App';
 import axios from 'axios';
 import Swal from "sweetalert2";
-import { LuTrash2, LuHeart, LuMessageCircle, LuSend, LuShare2 } from "react-icons/lu";
+import { LuTrash2, LuHeart, LuMessageCircle, LuSend, LuShare2, LuFlag } from "react-icons/lu";
 import { TfiAnnouncement } from "react-icons/tfi";
 import { useSelector } from 'react-redux';
 import emptyDp from "../assets/emptyDP.jpg";
@@ -161,6 +161,61 @@ const Feed = ({ posts, setPosts, community }) => {
         });
     };
 
+    //Handel reporting a post
+    const handleReportPost = async (postId) => {
+        // 1. Ask the user for the reason using SweetAlert2 Dropdown
+        const { value: reason } = await Swal.fire({
+            title: "Report this post?",
+            text: "Please select a reason for reporting.",
+            input: "select",
+            inputOptions: {
+                "Spam": "Spam",
+                "Harassment": "Harassment",
+                "Inappropriate Content": "Inappropriate Content",
+                "Other": "Other"
+            },
+            inputPlaceholder: "Select a reason...",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Submit Report",
+            background: "#16191f",
+            color: "#fff",
+            inputValidator: (value) => {
+                if (!value) {
+                    return "You need to select a reason!";
+                }
+            }
+        });
+
+        // 2. If they selected a reason and clicked submit, send it to the backend
+        if (reason) {
+            try {
+                const res = await axios.post(`${serverUrl}/api/post/report/${postId}`, { reason }, {
+                    withCredentials: true
+                });
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Reported",
+                    text: res.data.message,
+                    background: "#16191f",
+                    color: "#fff",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Action Denied",
+                    text: error.response?.data?.message || "Failed to submit report.",
+                    background: "#16191f",
+                    color: "#fff"
+                });
+            }
+        }
+    };
+
     return (
         <div>
             {posts.length > 0 ? (
@@ -246,6 +301,16 @@ const Feed = ({ posts, setPosts, community }) => {
                                     <LuShare2 size={20} />
                                     <span className="font-medium hidden sm:inline text-sm">Share</span>
                                 </button>
+
+                                {post.author._id !== userData._id && (
+                                    <button
+                                        onClick={() => handleReportPost(post._id)}
+                                        className="flex items-center gap-1.5 text-gray-500 hover:text-red-400 transition-colors"
+                                        title="Report Post"
+                                    >
+                                        <LuFlag size={18} />
+                                    </button>
+                                )}
                             </div>
 
                             {showComments[post._id] && (
