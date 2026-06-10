@@ -11,18 +11,30 @@ const Home = () => {
   const [exploreCommunities, setExploreCommunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchCommunities();
   }, []);
 
+  useEffect(() => {
+    fetchCommunities();
+  }, [page]);
+
   const fetchCommunities = async () => {
     try {
-      const response = await axios.get(`${serverUrl}/api/community/all-communities`, {
+      setLoading(true);
+      // Append the page number to the URL!
+      const response = await axios.get(`${serverUrl}/api/community/all-communities?page=${page}`, {
         withCredentials: true
       });
       setLocalCommunities(response.data.localCommunities);
       setExploreCommunities(response.data.exploreCommunities);
+
+      // Save the total pages sent by the backend
+      setTotalPages(response.data.totalPages || 1);
+
       setLoading(false);
     } catch (error) {
       console.error("Error fetching communities:", error);
@@ -47,7 +59,7 @@ const Home = () => {
 
   if (loading) {
     return (
-      // ✅ Dark loader background
+      //  Dark loader background
       <div className="w-full h-screen flex justify-center items-center bg-[#091413]">
         <ClipLoader size={50} color="#4ade80" />
       </div>
@@ -66,14 +78,14 @@ const Home = () => {
 
           {isSearchVisible && (
             <div className="relative w-full h-12">
-              {/* ✅ Lighter icon for dark bg */}
+              {/*  Lighter icon for dark bg */}
               <LuSearch className="absolute left-4 top-3.5 text-gray-400" size={20} />
               <input
                 type="text"
                 placeholder="Search by name, city, or state..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                // ✅ Dark background, light text, dark border & focus ring
+                //  Dark background, light text, dark border & focus ring
                 className="w-full h-full pl-12 pr-4 rounded-2xl bg-[#0f2320] text-white placeholder-gray-500 border-2 border-gray-700 outline-none focus:border-green-600 transition-colors"
               />
             </div>
@@ -107,9 +119,34 @@ const Home = () => {
         )}
 
         {displayLocal.length === 0 && displayExplore.length === 0 && (
-          // ✅ Slightly brighter for readability on dark bg
+          //  Slightly brighter for readability on dark bg
           <div className="text-center text-gray-400 mt-10">
             <p>No communities found. Be the first to start one!</p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-6 mt-12 mb-4">
+            <button
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="px-6 py-2 bg-[#0f2320] text-emerald-400 border border-emerald-500/30 rounded-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-emerald-500/10 transition-colors"
+            >
+              Previous
+            </button>
+
+            <span className="text-gray-400 text-sm font-medium">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+              className="px-6 py-2 bg-[#0f2320] text-emerald-400 border border-emerald-500/30 rounded-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-emerald-500/10 transition-colors"
+            >
+              Next
+            </button>
           </div>
         )}
 

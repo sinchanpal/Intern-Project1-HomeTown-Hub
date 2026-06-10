@@ -69,12 +69,10 @@ export const getSingleCommunity = async (req, res) => {
 };
 
 
-//? This controller fetches all communities, prioritizing those in the user's location
+//? This controller fetches communities with Backend Pagination
 export const getAllCommunities = async (req, res) => {
     try {
-        // 1. Get the current logged-in user to find their location
         const currentUser = await User.findById(req.userId);
-
         if (!currentUser) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -82,26 +80,43 @@ export const getAllCommunities = async (req, res) => {
         const userCity = currentUser.city;
         const userState = currentUser.state;
 
-        // 2. Fetch communities that EXACTLY match the user's city and state
+        // --- PAGINATION SETUP ---
+        // Read the requested page from the URL (default to 1 if it doesn't exist)
+        const page = parseInt(req.query.page) || 1;
+        const limit = 6; // Show 6 explore communities per page
+        const skip = (page - 1) * limit; // Math to figure out how many to skip
+
+        // 1. Fetch Local Communities (We usually don't paginate the "Near You" section, so we just grab them all)
         const localCommunities = await Community.find({
             city: userCity,
             state: userState
         }).sort({ createdAt: -1 });
 
-        // 3. Fetch a few other communities to show the platform is active 
-        // ($ne means "Not Equal", so we don't show their local ones twice)
-        const exploreCommunities = await Community.find({
+        // 2. Define the filter for "Explore" (Not in their city/state)
+        const exploreFilter = {
             $or: [
                 { city: { $ne: userCity } },
                 { state: { $ne: userState } }
             ]
-        }).sort({ createdAt: -1 }).limit(10); // Limit to 10 so we don't overload the database
+        };
 
-        // 4. Send both lists back to the frontend!
+        // 3. Fetch Explore Communities WITH Pagination
+        const exploreCommunities = await Community.find(exploreFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)   // Skip the items from previous pages
+            .limit(limit); // Limit to 6 items for the current page
+
+        // 4. Calculate total pages
+        // We ask the database: "How many total explore communities exist in the whole database?"
+        const totalExploreCount = await Community.countDocuments(exploreFilter);
+        const totalPages = Math.ceil(totalExploreCount / limit);
+
         return res.status(200).json({
             message: "Communities fetched successfully",
             localCommunities,
-            exploreCommunities
+            exploreCommunities,
+            currentPage: page,
+            totalPages: totalPages
         });
 
     } catch (error) {
