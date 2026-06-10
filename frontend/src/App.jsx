@@ -24,7 +24,7 @@ import Communities from './pages/admin/Communities';
 import Reports from './pages/admin/Reports';
 
 
-export const serverUrl ="https://hometown-hub-backend-og4j.onrender.com"     //live backend url on render.com
+export const serverUrl = "https://hometown-hub-backend-og4j.onrender.com"     //live backend url on render.com
 
 // This is for run it on local computer "http://localhost:8000";
 
@@ -54,10 +54,10 @@ function App() {
           {/* Everything inside AdminLayout will have the Sidebar! */}
           <Route path="/admin" element={<AdminLayout />}>
             {/* The index route loads when visiting /admin exactly */}
-            <Route index element={<Overview/>} />
+            <Route index element={<Overview />} />
 
-            <Route path="users" element={<Users/>} />
-            <Route path="communities" element={<Communities/>} />
+            <Route path="users" element={<Users />} />
+            <Route path="communities" element={<Communities />} />
             <Route path="reports" element={<Reports />} />
           </Route>
         </Route>
