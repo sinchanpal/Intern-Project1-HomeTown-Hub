@@ -24,7 +24,9 @@ import Communities from './pages/admin/Communities';
 import Reports from './pages/admin/Reports';
 
 
-export const serverUrl = "http://localhost:8000";
+export const serverUrl ="https://hometown-hub-backend-og4j.onrender.com"     //live backend url on render.com
+
+// This is for run it on local computer "http://localhost:8000";
 
 function App() {
 
