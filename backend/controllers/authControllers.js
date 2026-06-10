@@ -46,8 +46,8 @@ export const SignUp = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true, // This makes the cookie inaccessible to JavaScript on the client side, enhancing security
             maxAge: 365 * 24 * 60 * 60 * 1000, // Cookie expires in 1 year
-            secure: false, //for development, set to true in production when using HTTPS
-            sameSite: "none", // changed from Strict to Lax
+            secure: true, //for development, set to true in production when using HTTPS
+            sameSite: "none", // changed from Strict to none
 
 
         });
@@ -94,8 +94,8 @@ export const Signin = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true, // This makes the cookie inaccessible to JavaScript on the client side, enhancing security
             maxAge: 365 * 24 * 60 * 60 * 1000, // Cookie expires in 1 year
-            secure: false, //for development, set to true in production when using HTTPS
-            sameSite: "none", // changed from Strict to Lax
+            secure: true, //for development, set to true in production when using HTTPS
+            sameSite: "none", // changed from Strict to none
 
 
         });
@@ -119,7 +119,7 @@ export const Signout = async (req, res) => {
         // Clear the token cookie to sign out the user
         res.clearCookie("token", {
             httpOnly: true, // This makes the cookie inaccessible to JavaScript on the client side, enhancing security
-            secure: false, //for development, set to true in production when using HTTPS
+            secure: true, //for development, set to true in production when using HTTPS
             sameSite: "none" // This helps prevent CSRF attacks by ensuring the cookie is only sent in requests originating from the same site
         });
 
