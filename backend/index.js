@@ -60,7 +60,10 @@ io.on("connection", (socket) => {
 
 // Middlewares 
 app.use(cors({
-    origin: "http://localhost:5173", // Allow requests from this origin (your frontend)
+    origin: [
+        "http://localhost:5173", // Keep this so I can still test locally!
+        "https://intern-project1-home-town-hub.vercel.app" // my new live frontend
+    ], // Allow requests from this origin (your frontend)
     credentials: true // Allow cookies to be sent in cross-origin requests
 }));
 
