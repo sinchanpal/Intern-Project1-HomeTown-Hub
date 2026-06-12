@@ -1,5 +1,7 @@
+import { userSocketMap } from "../index.js";
 import Community from "../models/communityModel.js";
 import Event from "../models/eventModel.js";
+import Notification from "../models/notificationModel.js";
 
 
 // Create a new community event
@@ -38,6 +40,37 @@ export const createEvent = async (req, res) => {
 
         // 5. Populate the creator's details to show their name/avatar instantly on the frontend
         await newEvent.populate("creator", "name profilePicture");
+
+        // ==========================================
+        // NOTIFICATION LOGIC START
+        // ==========================================
+        const io = req.app.get("io");
+
+        // Notify all members of the community EXCEPT the author of the post
+        const notificationPromises = community.members.map(async (memberId) => {
+            if (memberId.toString() !== userId.toString()) {
+                const newNotif = await Notification.create({
+                    recipient: memberId,
+                    sender: userId,
+                    type: "NEW_EVENT",
+                    community: communityId,
+                    post: newEvent._id,
+                    message: `${newEvent.creator.name} shared a new event in ${community.name}.`
+                });
+
+                // If this specific member is online, send it to them instantly!
+                const targetSocketId = userSocketMap[memberId.toString()];
+                if (targetSocketId) {
+                    io.to(targetSocketId).emit("newNotification", newNotif);
+                    io.to(targetSocketId).emit("newEvent", newEvent); //send the new event itself so it can appear in real-time on their feed if they're viewing the community
+                }
+            }
+        });
+
+        // Wait for all notifications to finish saving
+        await Promise.all(notificationPromises);
+        // ==========================================
+
 
         return res.status(201).json({
             message: "Event created successfully",

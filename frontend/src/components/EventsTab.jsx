@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { ClipLoader } from "react-spinners";
 import { LuCalendar, LuMapPin, LuClock, LuUsers, LuPlus, LuX, LuTrash2, LuCheck } from "react-icons/lu";
 import emptyDp from "../assets/emptyDP.jpg";
+import { useSocket } from '../context/SocketContext';
 
 const EventsTab = ({ communityId, community }) => {
     const { userData } = useSelector(state => state.user);
@@ -23,6 +24,32 @@ const EventsTab = ({ communityId, community }) => {
         date: "",
         location: ""
     });
+
+
+    const { socket } = useSocket();
+
+    // Listen for new events in real-time and add them to the feed if they belong to this community
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewEvent = (incomingEvent) => {
+            // SECURITY/UX CHECK: Only add the event to the feed IF it belongs to the community currently being viewed!
+            const eventCommunityId = incomingEvent.community._id || incomingEvent.community;
+
+            if (eventCommunityId.toString() === community._id.toString()) {
+                // Add the new event to the VERY TOP of the feed
+                setEvents((prevEvents) => [incomingEvent, ...prevEvents]);
+            }
+        };
+
+        // Turn on the listener
+        socket.on("newEvent", handleNewEvent);
+
+        // Cleanup: Turn off the listener when they leave the page so it doesn't duplicate
+        return () => {
+            socket.off("newEvent", handleNewEvent);
+        };
+    }, [socket, community._id, setEvents]);
 
     useEffect(() => {
         const fetchEvents = async () => {
