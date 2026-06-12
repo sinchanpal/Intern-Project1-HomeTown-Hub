@@ -49,7 +49,18 @@ const EventsTab = ({ communityId, community }) => {
         setCreating(true);
 
         try {
-            const res = await axios.post(`${serverUrl}/api/event/create-event/${communityId}`, formData, {
+
+            // Convert the  local time string into a smart, timezone-aware UTC string
+            const localDate = new Date(formData.date); //Ex: Grabs  local 4:00 PM
+            const timezoneAwareDate = localDate.toISOString(); // Safely converts to UTC mathematically
+
+            // Create a temporary object to send to the backend
+            const dataToSend = {
+                ...formData,
+                date: timezoneAwareDate
+            };
+
+            const res = await axios.post(`${serverUrl}/api/event/create-event/${communityId}`, dataToSend, {
                 withCredentials: true
             });
 
@@ -189,7 +200,6 @@ const EventsTab = ({ communityId, community }) => {
                         </div>
                         <textarea
                             name="description"
-                            required
                             placeholder="Add more details so people know what to expect..."
                             value={formData.description}
                             onChange={handleInputChange}
@@ -255,7 +265,7 @@ const EventsTab = ({ communityId, community }) => {
                                 </div>
 
                                 <p className="text-gray-300 whitespace-pre-wrap mb-4 bg-[#091413] p-3 rounded-xl border border-gray-800 text-sm">
-                                    {event.description}
+                                    {event?.description}
                                 </p>
 
                                 {/* Attendees & RSVP Section */}

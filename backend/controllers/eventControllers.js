@@ -10,8 +10,8 @@ export const createEvent = async (req, res) => {
         const userId = req.userId; // From your isAuth middleware
 
         // 1. Basic validation
-        if (!title || !description || !date || !location) {
-            return res.status(400).json({ message: "Please provide a title, description, date, and location." });
+        if (!title || !date || !location) {
+            return res.status(400).json({ message: "Please provide a title, date, and location." });
         }
 
         // 2. Find the community
@@ -28,7 +28,7 @@ export const createEvent = async (req, res) => {
         // 4. Create the event
         const newEvent = await Event.create({
             title,
-            description,
+            description: description || "", // Optional field, default to empty string
             date,
             location,
             community: communityId,
