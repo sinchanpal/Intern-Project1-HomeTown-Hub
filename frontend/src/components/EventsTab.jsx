@@ -291,9 +291,11 @@ const EventsTab = ({ communityId, community }) => {
                                     </p>
                                 </div>
 
-                                <p className="text-gray-300 whitespace-pre-wrap mb-4 bg-[#091413] p-3 rounded-xl border border-gray-800 text-sm">
-                                    {event?.description}
-                                </p>
+                                {event?.description && (
+                                    <p className="text-gray-300 whitespace-pre-wrap mb-4 bg-[#091413] p-3 rounded-xl border border-gray-800 text-sm">
+                                        {event?.description}
+                                    </p>
+                                )} 
 
                                 {/* Attendees & RSVP Section */}
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4 border-t border-gray-700/50">
