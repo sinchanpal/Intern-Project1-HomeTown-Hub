@@ -24,7 +24,10 @@ const server = http.createServer(app);
 // Initialize Socket.IO on top of the HTTP server
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173", // Must match your frontend URL
+        origin: [
+            "http://localhost:5173", // Keep this so I can still test locally!
+            "https://intern-project1-home-town-hub.vercel.app" // my new live frontend
+        ], // Allow requests from this origin (your frontend)
         credentials: true
     }
 });
