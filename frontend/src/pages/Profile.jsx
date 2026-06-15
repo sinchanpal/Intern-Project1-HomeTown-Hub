@@ -50,8 +50,8 @@ const Profile = () => {
                 withCredentials: true
             });
 
-            // Redirect the user to the login page
-            navigate('/login');
+            // Redirect the user to the signin page
+            navigate('/signin');
 
         } catch (error) {
             console.error("Error logging out:", error);
