@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { serverUrl } from '../App';
 import { LuMapPin, LuCalendar, LuArrowLeft, LuLogOut } from "react-icons/lu";
 import { FaUserEdit } from "react-icons/fa";
 import { HiOutlineUsers } from "react-icons/hi2";
 import emptyDp from "../assets/emptyDP.jpg";
+import { setUserData } from '../redux/userSlice';
 
 const Profile = () => {
     const { userId } = useParams(); // Grab the ID from the URL
@@ -16,6 +17,8 @@ const Profile = () => {
     const [profileUser, setProfileUser] = useState(null);
     const [userHubs, setUserHubs] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const dispatch = useDispatch();
 
     // Check if the logged-in user is viewing their own profile
     const isOwnProfile = userData && userData._id === userId;
@@ -50,8 +53,7 @@ const Profile = () => {
                 withCredentials: true
             });
 
-            // Redirect the user to the signin page
-            navigate('/signin');
+            dispatch(setUserData(null)); // Clear user data from Redux store     
 
         } catch (error) {
             console.error("Error logging out:", error);
