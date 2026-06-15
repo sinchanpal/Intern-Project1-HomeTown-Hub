@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { serverUrl } from '../App';
-import { LuMapPin, LuCalendar, LuArrowLeft } from "react-icons/lu";
+import { LuMapPin, LuCalendar, LuArrowLeft, LuLogOut } from "react-icons/lu";
 import { FaUserEdit } from "react-icons/fa";
 import { HiOutlineUsers } from "react-icons/hi2";
 import emptyDp from "../assets/emptyDP.jpg";
@@ -42,6 +42,23 @@ const Profile = () => {
         }
     }, [userId]);
 
+
+    const handleLogout = async () => {
+        try {
+
+            await axios.get(`${serverUrl}/api/auth/signout`, {
+                withCredentials: true
+            });
+
+            // Redirect the user to the login page
+            navigate('/login');
+
+        } catch (error) {
+            console.error("Error logging out:", error);
+            alert("Failed to log out. Please try again.");
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#091413] flex items-center justify-center text-white">
@@ -70,12 +87,20 @@ const Profile = () => {
                     </button>
 
                     {isOwnProfile && (
-                        <button
-                            onClick={() => navigate('/edit-profile')}
-                            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-xl transition-colors text-sm font-medium border border-gray-700"
-                        >
-                            <FaUserEdit size={16} /> Edit Profile
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => navigate('/edit-profile')}
+                                className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-xl transition-colors text-sm font-medium border border-gray-700"
+                            >
+                                <FaUserEdit size={16} /> Edit Profile
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-xl transition-colors text-sm font-medium border border-red-500/20"
+                            >
+                                <LuLogOut size={16} /> Logout
+                            </button>
+                        </div>
                     )}
                 </div>
 
